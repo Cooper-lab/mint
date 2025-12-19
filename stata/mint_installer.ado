@@ -63,6 +63,21 @@ def _mint_install_python(pythonpath, github):
     import sys
     import os
 
+    def run_pip_command(args, **kwargs):
+        """Run pip command, trying both 'pip' and 'pip3' if needed."""
+        try:
+            # First try with module form (most reliable)
+            return subprocess.run([sys.executable, "-m", "pip"] + args, **kwargs)
+        except (subprocess.SubprocessError, FileNotFoundError):
+            # Fallback to direct pip commands
+            for pip_cmd in ["pip", "pip3"]:
+                try:
+                    return subprocess.run([pip_cmd] + args, **kwargs)
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    continue
+            # If all fail, raise the last error
+            return subprocess.run([sys.executable, "-m", "pip"] + args, **kwargs)
+
     try:
         # Check if mint is already available
         try:
@@ -157,21 +172,21 @@ def _mint_install_python(pythonpath, github):
                 pip_exe = os.path.join(venv_path, "bin", "pip") if os.name != 'nt' else os.path.join(venv_path, "Scripts", "pip.exe")
 
                 SFIToolkit.displayln("{text}Installing mint into virtual environment...{reset}")
-                result = subprocess.run([pip_exe, "install", "-e", mint_path],
-                                      capture_output=True, text=True, timeout=120)
+                result = run_pip_command(["install", "-e", mint_path],
+                                       capture_output=True, text=True, timeout=120)
         else:
             # Direct installation without virtual environment
             # Try PyPI first
             SFIToolkit.displayln("{text}Trying PyPI installation...{reset}")
-            result = subprocess.run([sys.executable, "-m", "pip", "install", "mint"],
-                                  capture_output=True, text=True, timeout=60)
+            result = run_pip_command(["install", "mint"],
+                                   capture_output=True, text=True, timeout=60)
 
             # If PyPI fails and we have local source, try local installation
             if result.returncode != 0 and mint_path:
                 SFIToolkit.displayln("{text}PyPI installation failed, trying local installation...{reset}")
                 SFIToolkit.displayln(f"{{text}}Installing from local path: {mint_path}{{reset}}")
-                result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
-                                      capture_output=True, text=True, timeout=120)
+                result = run_pip_command(["install", "-e", mint_path],
+                                       capture_output=True, text=True, timeout=120)
             elif result.returncode != 0 and not mint_path:
                 SFIToolkit.displayln("{error}PyPI installation failed and no local source found.{reset}")
                 SFIToolkit.displayln("{text}To install from the development version:{reset}")
@@ -214,8 +229,10 @@ def _mint_install_python(pythonpath, github):
         SFIToolkit.errprintln(f"Error installing Python package: {e}")
         SFIToolkit.errprintln("")
         SFIToolkit.errprintln("Manual installation:")
-        SFIToolkit.errprintln("python: import subprocess; subprocess.run(['pip', 'install', 'mint'])")
+        SFIToolkit.errprintln("python: import subprocess, sys; subprocess.run([sys.executable, '-m', 'pip', 'install', 'mint'])")
         SFIToolkit.errprintln("or")
-        SFIToolkit.errprintln("python: import subprocess, os; ado_path = SFIToolkit.getStringLocal('c(sysdir_plus)'); mint_path = os.path.dirname(ado_path); subprocess.run(['pip', 'install', '-e', mint_path])")
+        SFIToolkit.errprintln("python: import subprocess, sys, os; ado_path = SFIToolkit.getStringLocal('c(sysdir_plus)'); mint_path = os.path.dirname(ado_path); subprocess.run([sys.executable, '-m', 'pip', 'install', '-e', mint_path])")
+        SFIToolkit.errprintln("")
+        SFIToolkit.errprintln("Note: On some systems you may need to use 'pip3' instead of 'pip' in the commands above.")
         raise
 end
