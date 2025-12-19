@@ -124,9 +124,7 @@ def _mint_install_python(pythonpath):
                         potential_mint_path = path
                         break
 
-                if potential_mint_path:
-
-                if os.path.exists(os.path.join(potential_mint_path, "pyproject.toml")):
+                if potential_mint_path and os.path.exists(os.path.join(potential_mint_path, "pyproject.toml")):
                     mint_path = potential_mint_path
                     SFIToolkit.displayln(f"{{text}}Found local mint source at: {mint_path}{{reset}}")
                 else:
