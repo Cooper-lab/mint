@@ -9,11 +9,14 @@ This directory contains Stata integration files for the mint lab project scaffol
 The easiest way to install mint for Stata is using the automated installer, which handles both the Stata package and Python package installation:
 
 ```stata
-// Automated installation (installs everything)
+// Automated installation with virtual environment (recommended)
 mint_installer
 
-// Or force reinstallation
+// Force reinstallation
 mint_installer, force
+
+// Install directly without virtual environment (use if venv fails)
+mint_installer, novenv
 
 // Verify installation
 help mint
@@ -78,6 +81,10 @@ cp mint.sthlp ~/ado/personal/
    ```
 
 ## Features
+
+### Virtual Environment Isolation
+
+By default, the automated installer creates a dedicated virtual environment (`.mint_venv/`) for the mint Python package, ensuring clean isolation from other Python packages and avoiding dependency conflicts. If virtual environment creation fails, the installer will throw an error - use the `novenv` option to install directly instead.
 
 ### Automatic Python Package Installation
 

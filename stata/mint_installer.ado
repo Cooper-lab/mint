@@ -104,10 +104,7 @@ def _mint_install_python(pythonpath):
 
             if venv_result.returncode != 0:
                 SFIToolkit.displayln(f"{{error}}Failed to create virtual environment: {venv_result.stderr}{{reset}}")
-                # Fall back to direct installation
-                SFIToolkit.displayln("{text}Falling back to direct installation...{reset}")
-                result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
-                                      capture_output=True, text=True, timeout=120)
+                raise RuntimeError(f"Virtual environment creation failed. Try using 'mint_installer, novenv' to install directly. Error: {venv_result.stderr}")
             else:
                 # Install into virtual environment
                 pip_exe = os.path.join(venv_path, "bin", "pip") if os.name != 'nt' else os.path.join(venv_path, "Scripts", "pip.exe")

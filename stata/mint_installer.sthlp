@@ -60,7 +60,8 @@ based on the Stata installation location.
 {phang}
 {opt novenv} skips virtual environment creation and installs mint directly into
 Stata's Python environment. By default, the installer creates a virtual environment
-for mint to avoid conflicts with other packages.
+for mint to avoid conflicts with other packages. If virtual environment creation fails,
+the installer will throw an error - use {opt novenv} to install directly instead.
 
 {marker examples}{...}
 {title:Examples}
@@ -94,7 +95,8 @@ Install directly without virtual environment:
 
 {pstd}
 This installer provides a convenient way to set up the complete mint environment
-without manual intervention. It is particularly useful for:
+without manual intervention. By default, it creates an isolated virtual environment
+for mint to avoid conflicts with other Python packages. It is particularly useful for:
 
 {p 4 4 2}
 • First-time installations
@@ -104,6 +106,9 @@ without manual intervention. It is particularly useful for:
 {p_end}
 {p 4 4 2}
 • Development environment setup
+{p_end}
+{p 4 4 2}
+• Clean package isolation via virtual environment
 {p_end}
 
 {pstd}
