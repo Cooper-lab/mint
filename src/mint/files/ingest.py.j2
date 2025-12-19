@@ -1,0 +1,28 @@
+"""Data ingestion script for {{ project_name }}."""
+
+import os
+import sys
+from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+def main():
+    """Main ingestion function."""
+    print("Starting data ingestion for {{ project_name }}...")
+
+    # Set up directories
+    project_root = Path(__file__).parent.parent
+    raw_data_dir = project_root / "data" / "raw"
+
+    print(f"Raw data directory: {raw_data_dir}")
+
+    # TODO: Implement data ingestion logic
+    # - Download data from sources
+    # - Extract archives if needed
+    # - Save to data/raw/
+
+    print("Data ingestion completed.")
+
+if __name__ == "__main__":
+    main()

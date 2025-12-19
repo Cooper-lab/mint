@@ -1,0 +1,23 @@
+stages:
+  ingest:
+    cmd: python src/ingest.py
+    deps:
+      - src/ingest.py
+    outs:
+      - data/raw/
+
+  clean:
+    cmd: python src/clean.py
+    deps:
+      - src/clean.py
+      - data/raw/
+    outs:
+      - data/intermediate/
+
+  validate:
+    cmd: python src/validate.py
+    deps:
+      - src/validate.py
+      - data/intermediate/
+    outs:
+      - data/final/

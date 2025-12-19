@@ -1,0 +1,30 @@
+"""Data validation script for {{ project_name }}."""
+
+import os
+import sys
+from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+def main():
+    """Main validation function."""
+    print("Starting data validation for {{ project_name }}...")
+
+    # Set up directories
+    project_root = Path(__file__).parent.parent
+    intermediate_data_dir = project_root / "data" / "intermediate"
+    final_data_dir = project_root / "data" / "final"
+
+    print(f"Intermediate data directory: {intermediate_data_dir}")
+    print(f"Final data directory: {final_data_dir}")
+
+    # TODO: Implement data validation logic
+    # - Load intermediate data
+    # - Run quality checks
+    # - Save validated data to data/final/
+
+    print("Data validation completed.")
+
+if __name__ == "__main__":
+    main()

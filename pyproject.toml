@@ -1,0 +1,84 @@
+[project]
+name = "mint"
+version = "0.1.0"
+description = "Lab project scaffolding tool"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"  # Stata 16+ supports 3.4+, but 3.9 ensures modern library support
+authors = [
+    {name = "mint development team", email = "mint@example.com"},
+]
+maintainers = [
+    {name = "mint development team", email = "mint@example.com"},
+]
+keywords = ["research", "data", "version-control", "git", "dvc", "stata", "python", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Archiving",
+]
+dependencies = [
+    "click>=8.0",
+    "gitpython>=3.1",
+    "jinja2>=3.0",
+    "rich>=13.0",       # Pretty terminal output
+    "keyring>=24.0",    # Secure credential storage
+    "boto3>=1.28",      # S3-compatible storage
+    "pyyaml>=6.0",      # YAML configuration files
+    "dvc>=3.0",         # Data Version Control
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+
+[project.scripts]
+mint = "mint.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/mint"
+Documentation = "https://mint.readthedocs.io/"
+Repository = "https://github.com/your-org/mint"
+Issues = "https://github.com/your-org/mint/issues"
+Changelog = "https://github.com/your-org/mint/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mint = ["*.ado", "*.sthlp", "*.md", "*.pkg"]
+
+# uv configuration
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true

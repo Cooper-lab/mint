@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "{{ project_name }}",
+    "type": "{{ project_type }}",
+    "full_name": "{{ full_project_name }}",
+    "created_at": "{{ created_at }}",
+    "created_by": "{{ author }}"
+  },
+  "description": "{{ project_name }} project",
+  "tags": [],
+  "storage": {
+    "provider": "{{ storage_provider | default('s3') }}",
+    "bucket": "{{ bucket_name | default('') }}",
+    "endpoint": "{{ storage_endpoint | default('') }}",
+    "versioning": {{ storage_versioning | default(true) | lower }}
+  }
+}

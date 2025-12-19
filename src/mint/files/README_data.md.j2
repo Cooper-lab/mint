@@ -1,0 +1,52 @@
+# {{ full_project_name }}
+
+Data product for {{ project_name }}.
+
+## Overview
+
+This repository contains the data processing pipeline for {{ project_name }}.
+
+## Data Availability
+
+- **Raw Data**: Located in `data/raw/`
+- **Intermediate Data**: Located in `data/intermediate/`
+- **Final Data**: Located in `data/final/`
+
+## Requirements
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Pipeline
+
+1. **Ingest**: Raw data acquisition (`src/ingest.py`)
+2. **Clean**: Data cleaning and preprocessing (`src/clean.py`)
+3. **Validate**: Data quality checks (`src/validate.py`)
+
+## Language Support
+
+This project supports multiple programming languages:
+- **Python**: Primary data processing scripts
+- **R**: Available in `src/r/` for statistical analysis and visualization
+
+## Usage
+
+Run the complete pipeline:
+```bash
+# Ingest raw data
+python src/ingest.py
+
+# Clean data
+python src/clean.py
+
+# Validate results
+python src/validate.py
+```
+
+## Data Provenance
+
+Created: {{ created_at }}
+{% if author %}Author: {{ author }}{% endif %}
+{% if organization %}Organization: {{ organization }}{% endif %}
