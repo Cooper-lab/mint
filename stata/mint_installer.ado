@@ -84,7 +84,8 @@ def _mint_install_python(pythonpath):
                 raise FileNotFoundError(f"pyproject.toml not found in {mint_path}")
         else:
             # Find local mint source based on Stata ado path
-            ado_path = SFIToolkit.getStringLocal("c(sysdir_plus)")
+            from sfi import Macro
+            ado_path = Macro.get("c(sysdir_plus)")
             mint_path = os.path.dirname(ado_path)  # Go up one level from PLUS to find mint
 
         if not os.path.exists(os.path.join(mint_path, "pyproject.toml")):
@@ -115,9 +116,17 @@ def _mint_install_python(pythonpath):
                                       capture_output=True, text=True, timeout=120)
         else:
             # Direct installation without virtual environment
-            SFIToolkit.displayln("{text}Installing mint directly (no virtual environment)...{reset}")
-            result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
-                                  capture_output=True, text=True, timeout=120)
+            # Try PyPI first
+            SFIToolkit.displayln("{text}Trying PyPI installation...{reset}")
+            result = subprocess.run([sys.executable, "-m", "pip", "install", "mint"],
+                                  capture_output=True, text=True, timeout=60)
+
+            # If PyPI fails, try local installation
+            if result.returncode != 0:
+                SFIToolkit.displayln("{text}PyPI installation failed, trying local installation...{reset}")
+                SFIToolkit.displayln(f"{{text}}Installing from local path: {mint_path}{{reset}}")
+                result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
+                                      capture_output=True, text=True, timeout=120)
 
         # Test import - handle both virtual environment and direct installation
         try:
