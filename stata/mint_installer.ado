@@ -119,37 +119,31 @@ def _mint_install_python(pythonpath):
             result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
                                   capture_output=True, text=True, timeout=120)
 
-            # Test import - handle both virtual environment and direct installation
-            try:
-                if use_venv:
-                    # Add virtual environment to Python path for import testing
-                    venv_site_packages = os.path.join(venv_path, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
-                    if venv_site_packages not in sys.path:
-                        sys.path.insert(0, venv_site_packages)
+        # Test import - handle both virtual environment and direct installation
+        try:
+            if use_venv:
+                # Add virtual environment to Python path for import testing
+                venv_site_packages = os.path.join(venv_path, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
+                if venv_site_packages not in sys.path:
+                    sys.path.insert(0, venv_site_packages)
 
-                # Also add the mint source directory to path
-                if mint_path not in sys.path:
-                    sys.path.insert(0, mint_path)
+            # Also add the mint source directory to path
+            if mint_path not in sys.path:
+                sys.path.insert(0, mint_path)
 
-                import mint
-                if use_venv:
-                    SFIToolkit.displayln("{result}✓ Python package installed successfully in virtual environment{reset}")
-                    SFIToolkit.displayln(f"{{text}}Virtual environment: {venv_path}{{reset}}")
-                else:
-                    SFIToolkit.displayln("{result}✓ Python package installed successfully (direct installation){reset}")
-                SFIToolkit.displayln(f"{{text}}Version: {mint.__version__}{{reset}}")
-                installed_successfully = True
+            import mint
+            if use_venv:
+                SFIToolkit.displayln("{result}✓ Python package installed successfully in virtual environment{reset}")
+                SFIToolkit.displayln(f"{{text}}Virtual environment: {venv_path}{{reset}}")
+            else:
+                SFIToolkit.displayln("{result}✓ Python package installed successfully (direct installation){reset}")
+            SFIToolkit.displayln(f"{{text}}Version: {mint.__version__}{{reset}}")
+            installed_successfully = True
 
-            except ImportError as e:
-                install_type = "virtual environment" if use_venv else "direct installation"
-                SFIToolkit.displayln(f"{{error}}{install_type.title()} installation completed but import failed: {e}{{reset}}")
-                raise ImportError(f"Installation succeeded but mint module cannot be imported. Install type: {install_type}")
-
-        else:
-            SFIToolkit.displayln(f"{{error}}Installation failed: {result.stderr}{{reset}}")
-            if result.stdout:
-                SFIToolkit.displayln(f"stdout: {result.stdout}")
-            raise subprocess.SubprocessError("Installation failed")
+        except ImportError as e:
+            install_type = "virtual environment" if use_venv else "direct installation"
+            SFIToolkit.displayln(f"{{error}}{install_type.title()} installation completed but import failed: {e}{{reset}}")
+            raise ImportError(f"Installation succeeded but mint module cannot be imported. Install type: {install_type}")
 
         if not installed_successfully:
             raise RuntimeError("Failed to install mint Python package")
