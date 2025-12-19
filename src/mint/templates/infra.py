@@ -1,5 +1,6 @@
 """Infrastructure template (infra_*)."""
 
+from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
 from .base import BaseTemplate
@@ -43,9 +44,8 @@ class InfraTemplate(BaseTemplate):
             (".gitignore", "gitignore.txt"),
         ]
 
-    def create(self, name: str, path: str = ".", **context) -> "Path":
+    def create(self, name: str, path: str = ".", **context) -> Path:
         """Create infrastructure project with dynamic package name."""
-        from pathlib import Path
 
         # Validate project name
         if not self._validate_name(name):

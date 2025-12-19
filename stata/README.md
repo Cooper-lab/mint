@@ -62,15 +62,15 @@ If the above doesn't work, you can install manually:
 
 2. **Install in Stata's personal ado directory:**
    ```bash
-# macOS
+   # macOS
 cp mint.ado ~/Library/Application\ Support/Stata/ado/personal/
 cp mint.sthlp ~/Library/Application\ Support/Stata/ado/personal/
 
-# Windows
+   # Windows
 copy mint.ado "%USERPROFILE%\Documents\Stata\ado\personal\"
 copy mint.sthlp "%USERPROFILE%\Documents\Stata\ado\personal\"
 
-# Linux
+   # Linux
 cp mint.ado ~/ado/personal/
 cp mint.sthlp ~/ado/personal/
    ```

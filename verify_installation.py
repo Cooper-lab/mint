@@ -35,13 +35,19 @@ def verify_installation():
         f"Current version: {sys.version}"
     )
 
-    # Check mint import
+    # Check mint import (try local source first for development)
+    import sys
+    import os
+    local_src = os.path.join(os.path.dirname(__file__), 'src')
+    if local_src not in sys.path:
+        sys.path.insert(0, local_src)
+
     try:
         import mint
         version = getattr(mint, '__version__', 'unknown')
-        check("mint package import", True, f"Version: {version}")
+        check("mint package import", True, f"Version: {version} (local source)")
     except ImportError:
-        check("mint package import", False, "Package not found")
+        check("mint package import", False, "Package not found in local source")
 
     # Check CLI
     try:
