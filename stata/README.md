@@ -79,10 +79,10 @@ cp mint.sthlp ~/ado/personal/
 
 3. **Install the mint Python package:**
    ```stata
-   // Install from GitHub (recommended)
+   // Install from GitHub (only option)
    python: import subprocess; subprocess.run(["pip", "install", "git+https://github.com/Cooper-lab/mint.git"])
 
-   // Or for development/testing
+   // Or for development/testing from local source
    python: import subprocess; subprocess.run(["pip", "install", "-e", "/path/to/mint"])
    ```
 
@@ -134,9 +134,10 @@ The `pythonpath()` option specifies the **local path** to the mint source code o
 
 The `mint` command includes automatic installation of the Python `mint` package. If the Python package is not found when you run a command, `mint` will:
 
-1. First try to install from local source or GitHub
-2. If that fails, try to install from PyPI: `pip install mint`
-3. Provide clear error messages and manual installation instructions if both methods fail
+1. Try to install from local source or GitHub
+2. Provide clear error messages if installation fails
+
+**Note:** PyPI installation is not supported. The mint package is only available via GitHub or local source installation.
 
 This means that in most cases, you only need to install the Stata package - the Python package will be installed automatically when needed.
 

@@ -73,27 +73,28 @@ def _prjsetup_create(project_type, name, path, no_git, no_dvc, bucket):
             import sys
             import os
 
-            # First try installing from PyPI
+            # Try installing from GitHub or local source
             try:
-                SFIToolkit.displayln("{text}Trying to install mint from PyPI...{reset}")
-                result = subprocess.run([sys.executable, "-m", "pip", "install", "mint"],
-                                      capture_output=True, text=True, timeout=60)
+                # First try GitHub installation
+                SFIToolkit.displayln("{text}Trying to install mint from GitHub...{reset}")
+                result = subprocess.run([sys.executable, "-m", "pip", "install", "git+https://github.com/Cooper-lab/mint.git"],
+                                      capture_output=True, text=True, timeout=120)
 
                 if result.returncode == 0:
-                    SFIToolkit.displayln("{result}Successfully installed mint from PyPI!{reset}")
+                    SFIToolkit.displayln("{result}Successfully installed mint from GitHub!{reset}")
                     # Now try importing again
                     from mint import create_project
                 else:
-                    raise subprocess.SubprocessError(f"PyPI installation failed: {result.stderr}")
+                    raise subprocess.SubprocessError(f"GitHub installation failed: {result.stderr}")
 
             except (subprocess.SubprocessError, subprocess.TimeoutExpired):
-                # If PyPI installation fails, try local installation
+                # If GitHub installation fails, try local installation
                 # Get the path to the Stata ado directory to find the mint source
                 ado_path = SFIToolkit.getStringLocal("c(sysdir_plus)")
                 mint_path = os.path.join(os.path.dirname(ado_path), "mint")
 
                 if os.path.exists(os.path.join(mint_path, "pyproject.toml")):
-                    SFIToolkit.displayln("{text}Found local mint source. Installing from local directory...{reset}")
+                    SFIToolkit.displayln("{text}GitHub installation failed. Trying local source...{reset}")
                     result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
                                           capture_output=True, text=True, timeout=120)
 
@@ -103,14 +104,14 @@ def _prjsetup_create(project_type, name, path, no_git, no_dvc, bucket):
                     else:
                         raise subprocess.SubprocessError(f"Local installation failed: {result.stderr}")
                 else:
-                    raise ImportError("Could not find mint package locally or on PyPI")
+                    raise ImportError("Could not find mint package locally or on GitHub")
 
         except Exception as install_error:
             SFIToolkit.errprintln("Error: Failed to automatically install mint package.")
             SFIToolkit.errprintln(f"Installation error: {install_error}")
             SFIToolkit.errprintln("")
             SFIToolkit.errprintln("Manual installation options:")
-            SFIToolkit.errprintln("1. From PyPI: python: import subprocess; subprocess.run(['pip', 'install', 'mint'])")
+            SFIToolkit.errprintln("1. From GitHub: python: import subprocess; subprocess.run(['pip', 'install', 'git+https://github.com/Cooper-lab/mint.git'])")
             SFIToolkit.errprintln("2. From local source: python: import subprocess, os; ado_path = SFIToolkit.getStringLocal('c(sysdir_plus)'); mint_path = os.path.join(os.path.dirname(ado_path), 'mint'); subprocess.run(['pip', 'install', '-e', mint_path])")
             SFIToolkit.exit(198)
 

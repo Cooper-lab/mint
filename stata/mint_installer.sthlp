@@ -35,9 +35,8 @@ handles the installation process in two steps:
 {p_end}
 
 {pstd}
-The installer will attempt to install the Python package from PyPI first. If that
-fails, it will attempt to install from the local source directory (useful for
-development installations).
+The installer will attempt to install the Python package from GitHub or local
+source directory. PyPI installation is not supported.
 
 {marker options}{...}
 {title:Options}
