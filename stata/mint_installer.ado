@@ -74,27 +74,41 @@ def _mint_install_python(pythonpath):
 
         SFIToolkit.displayln("{text}Installing Python package 'mint'...{reset}")
 
-        # Installation logic: try local installation with virtual environment
+        # Installation logic: PyPI first, then local source if available
         installed_successfully = False
 
-        # Determine installation path
+        # Determine installation path (only needed for local installation)
+        mint_path = None
         if pythonpath:
             mint_path = pythonpath
             if not os.path.exists(os.path.join(mint_path, "pyproject.toml")):
-                raise FileNotFoundError(f"pyproject.toml not found in {mint_path}")
+                SFIToolkit.displayln(f"{{error}}pyproject.toml not found in specified path: {mint_path}{{reset}}")
+                SFIToolkit.displayln("{text}Continuing with PyPI installation only...{reset}")
+                mint_path = None
         else:
-            # Find local mint source based on Stata ado path
-            from sfi import Macro
-            ado_path = Macro.get("c(sysdir_plus)")
-            mint_path = os.path.dirname(ado_path)  # Go up one level from PLUS to find mint
+            # Try to find local mint source based on Stata ado path
+            try:
+                from sfi import Macro
+                ado_path = Macro.get("c(sysdir_plus)")
+                potential_mint_path = os.path.dirname(ado_path)  # Go up one level from PLUS to find mint
 
-        if not os.path.exists(os.path.join(mint_path, "pyproject.toml")):
-            raise FileNotFoundError(f"Could not find mint source directory. Tried: {mint_path}")
+                if os.path.exists(os.path.join(potential_mint_path, "pyproject.toml")):
+                    mint_path = potential_mint_path
+                    SFIToolkit.displayln(f"{{text}}Found local mint source at: {mint_path}{{reset}}")
+                else:
+                    SFIToolkit.displayln(f"{{text}}Local mint source not found at: {potential_mint_path}{{reset}}")
+                    SFIToolkit.displayln("{text}Continuing with PyPI installation only...{reset}")
+            except Exception as e:
+                SFIToolkit.displayln(f"{{text}}Could not determine Stata paths: {e}{{reset}}")
+                SFIToolkit.displayln("{text}Continuing with PyPI installation only...{reset}")
 
-        # Check if virtual environment should be used
-        use_venv = False 
+        # Check if virtual environment should be used (only if we have local source)
+        use_venv = False
+        if use_venv and not mint_path:
+            SFIToolkit.displayln("{text}Virtual environment requested but local source not available. Using direct installation.{reset}")
+            use_venv = False 
 
-        if use_venv:
+        if use_venv and mint_path:
             # Create virtual environment for mint
             venv_path = os.path.join(mint_path, ".mint_venv")
             SFIToolkit.displayln(f"{{text}}Creating virtual environment at: {venv_path}{{reset}}")
@@ -109,7 +123,6 @@ def _mint_install_python(pythonpath):
             else:
                 # Install into virtual environment
                 pip_exe = os.path.join(venv_path, "bin", "pip") if os.name != 'nt' else os.path.join(venv_path, "Scripts", "pip.exe")
-                python_exe = os.path.join(venv_path, "bin", "python") if os.name != 'nt' else os.path.join(venv_path, "Scripts", "python.exe")
 
                 SFIToolkit.displayln("{text}Installing mint into virtual environment...{reset}")
                 result = subprocess.run([pip_exe, "install", "-e", mint_path],
@@ -121,12 +134,17 @@ def _mint_install_python(pythonpath):
             result = subprocess.run([sys.executable, "-m", "pip", "install", "mint"],
                                   capture_output=True, text=True, timeout=60)
 
-            # If PyPI fails, try local installation
-            if result.returncode != 0:
+            # If PyPI fails and we have local source, try local installation
+            if result.returncode != 0 and mint_path:
                 SFIToolkit.displayln("{text}PyPI installation failed, trying local installation...{reset}")
                 SFIToolkit.displayln(f"{{text}}Installing from local path: {mint_path}{{reset}}")
                 result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", mint_path],
                                       capture_output=True, text=True, timeout=120)
+            elif result.returncode != 0 and not mint_path:
+                SFIToolkit.displayln("{error}PyPI installation failed and no local source found.{reset}")
+                SFIToolkit.displayln("{text}To install from local source, specify the path:{reset}")
+                SFIToolkit.displayln("{text}  mint_installer, pythonpath(\"/path/to/mint\"){reset}")
+                raise RuntimeError("Installation failed: No local source available and PyPI installation failed")
 
         # Test import - handle both virtual environment and direct installation
         try:
@@ -136,8 +154,8 @@ def _mint_install_python(pythonpath):
                 if venv_site_packages not in sys.path:
                     sys.path.insert(0, venv_site_packages)
 
-            # Also add the mint source directory to path
-            if mint_path not in sys.path:
+            # Also add the mint source directory to path (if available)
+            if mint_path and mint_path not in sys.path:
                 sys.path.insert(0, mint_path)
 
             import mint

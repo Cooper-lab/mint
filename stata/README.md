@@ -18,6 +18,9 @@ mint_installer, force
 // Install directly without virtual environment (use if venv fails)
 mint_installer, novenv
 
+// Install from specific local source path
+mint_installer, pythonpath("/path/to/mint/source")
+
 // Verify installation
 help mint
 
@@ -85,6 +88,22 @@ cp mint.sthlp ~/ado/personal/
 ### Virtual Environment Isolation
 
 By default, the automated installer creates a dedicated virtual environment (`.mint_venv/`) for the mint Python package, ensuring clean isolation from other Python packages and avoiding dependency conflicts. If virtual environment creation fails, the installer will throw an error - use the `novenv` option to install directly instead.
+
+### Finding the Python Path
+
+If you need to specify a custom path to the mint source code using the `pythonpath()` option, you can find it by:
+
+1. **If you cloned the repository:**
+   ```bash
+   # The path to the cloned mint repository
+   /path/to/your/cloned/mint/repository
+   ```
+
+2. **Check for pyproject.toml:**
+   The specified path must contain a `pyproject.toml` file.
+
+3. **Automatic detection:**
+   The installer automatically tries to find the mint source relative to your Stata installation. You only need to specify `pythonpath()` if automatic detection fails.
 
 ### Automatic Python Package Installation
 

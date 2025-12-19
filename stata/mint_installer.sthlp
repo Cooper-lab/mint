@@ -54,8 +54,10 @@ Default is "{browse "https://github.com/Cooper-lab/mint/raw/main/stata/":https:/
 
 {phang}
 {opt pythonpath(path)} specifies the path to the local mint Python package source
-directory. If not specified, the installer will attempt to find it automatically
-based on the Stata installation location.
+directory. This should be the path to a directory containing {cmd:pyproject.toml}.
+If not specified, the installer will attempt to find it automatically based on the
+Stata installation location. Use this option if automatic detection fails or if
+you want to install from a specific source location.
 
 {phang}
 {opt novenv} skips virtual environment creation and installs mint directly into
@@ -89,6 +91,12 @@ Install directly without virtual environment:
 
 {p 8 12 2}
 {cmd:. mint_installer, novenv}
+
+{phang}
+Install from specific source directory:
+
+{p 8 12 2}
+{cmd:. mint_installer, pythonpath("C:\Users\username\projects\mint")}
 
 {marker remarks}{...}
 {title:Remarks}
