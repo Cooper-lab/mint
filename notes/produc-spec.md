@@ -52,6 +52,7 @@ Crucially, `mint` acts as the client-side enforcer for the lab's "Data Commons."
      - Generate directory trees for `data_` (products), `prj__` (analysis), `infra_` (tooling), and `enclave_` (secure data consumption).
      - Render language-specific templates for `README.md`, `metadata.json`, `.gitignore`, and utility scripts.
      - **Language Selection**: Require explicit programming language choice (Python/R/Stata) with no defaults.
+     - **Cross-Platform Support**: Automatic Stata detection and platform-aware script execution on Windows, macOS, and Linux.
    - **Mint Utilities** (Priority: High)
      - Auto-generate `_mint_utils.{lang}` files with project validation, logging, and schema utilities.
      - **Project Directory Validation**: Ensure scripts run from correct project root with clear error messages.
@@ -65,6 +66,8 @@ Crucially, `mint` acts as the client-side enforcer for the lab's "Data Commons."
    - **Git & DVC Initialization** (Priority: High)
      - Initialize local Git repositories.
      - Initialize DVC and configure the remote to specific Wasabi S3 buckets (`s3://bucket/{project_name}`).
+     - **Platform-Aware Commands**: Generate DVC pipelines with cross-platform command syntax (Unix `&&` vs Windows `&`).
+     - **Script Directory Execution**: Configure DVC to run commands from `src/` directory for consistent path handling.
    - **Registry Integration (GitOps)** (Priority: High)
      - Automatically generate a metadata YAML file upon project creation.
      - Create a Pull Request to the central `data-commons-registry` repo to register the new asset.
@@ -91,11 +94,13 @@ Crucially, `mint` acts as the client-side enforcer for the lab's "Data Commons."
 ### 5.2. Core experience
    - **Create Project**:
      - User types `prjsetup, type(data) name(medicare_2024) lang(stata)` in Stata.
+     - System automatically detects Stata installation and displays: "✅ Stata detected: stata-mp"
      - System displays a spinner: "Scaffolding folders... Initializing DVC... Registering with Data Commons..."
      - System creates project structure with Git/DVC setup and language-specific utilities.
+     - System generates cross-platform DVC commands (automatically using `&&` on macOS/Linux or `&` on Windows).
      - System clones registry, creates catalog entry, and opens PR via git/SSH.
      - System returns: "Success! Project created at ./data_medicare_2024. Registration PR: https://github.com/org/registry/pull/123".
-     - User immediately begins work in the created folder with pre-configured logging and utilities.
+     - User immediately begins work in the created folder with pre-configured logging and utilities that run from `src/` directory.
 
 ### 5.3. Advanced features & edge cases
    - **Offline Mode**: If the Registry is unreachable, the tool scaffolds locally and warns the user to run `mint register` later.
@@ -137,6 +142,8 @@ For sensitive analyses requiring secure enclave access, Sarah can create an encl
    - **Data Commons Registry**: Git-based catalog system for tracking all lab projects and their metadata.
    - **Wasabi S3**: Used for DVC remote storage with per-project bucket creation.
    - **Local Stata Integration**: Requires Python integration (`pystata` or shell calls) within Stata.
+   - **Cross-Platform Stata Detection**: Automatic detection of Stata executables on Windows, macOS, and Linux using platform-specific methods.
+   - **Platform-Aware Command Execution**: DVC pipelines use appropriate command separators (`&&` vs `&`) and directory execution patterns.
 
 ### 8.2. Data storage & privacy
    - **Metadata**: Stored in the private `data-commons-registry` GitHub repo (YAML format).
@@ -152,6 +159,8 @@ For sensitive analyses requiring secure enclave access, Sarah can create an encl
    - **SSH Key Setup**: Users need SSH keys configured for GitHub to enable tokenless registration.
    - **GitHub CLI Installation**: Users need `gh` CLI installed and authenticated for PR creation.
    - **Registry Access**: Users need push access to the registry repository.
+   - **Cross-Platform Stata Detection**: Ensuring Stata executable paths are correctly detected across different operating systems and installation methods.
+   - **Platform Command Differences**: Handling differences in command-line syntax between Unix (macOS/Linux) and Windows systems.
 
 ## 9. Milestones & sequencing
 
@@ -241,3 +250,13 @@ For sensitive analyses requiring secure enclave access, Sarah can create an encl
      - Enclave workspace includes scripts to query registry for approved data products.
      - Data downloads are organized in `data/{repo_name}/{hash}-{date}/` directories.
      - Download logs and integrity checks are maintained for compliance.
+
+### 10.9. Cross-Platform Project Creation
+   - **ID**: US-009
+   - **Description**: As a Researcher working on different operating systems, I want mint to automatically detect Stata and create platform-appropriate scripts so that I can work seamlessly across Windows, macOS, and Linux environments.
+   - **Acceptance criteria**:
+     - Running `mint create data --name analysis --lang stata` automatically detects Stata executable on any platform.
+     - DVC pipeline commands use appropriate syntax (`&&` on Unix, `&` on Windows).
+     - Scripts run from `src/` directory with consistent relative paths (`../data/`).
+     - Configuration stores detected Stata path for future use.
+     - Manual override allows specifying custom Stata executable path.

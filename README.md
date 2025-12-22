@@ -15,6 +15,8 @@ A comprehensive Python CLI tool that automates the creation of standardized rese
 - 🛠️ **Mint Utilities**: Auto-generated utilities for logging, project validation, and schema generation
 - 📝 **Parameter-Aware Logging**: Automatic logging with parameter-based filenames (e.g., `ingest_2023.log`)
 - 🔖 **Version Tracking**: Metadata includes mint version and commit hash for reproducibility
+- 🌐 **Cross-Platform Support**: Automatic Stata detection and platform-aware command execution
+- 📍 **Script Directory Execution**: Commands run from `src/` directory for consistent path handling
 
 ### 🎉 Data Commons Registry Integration (v1.0.0)
 - 🏛️ **Automatic Project Registration**: Tokenless GitOps-based cataloging
@@ -214,12 +216,12 @@ data_healthcare/
 │   └── final/               # Analysis-ready data (DVC tracked)
 ├── src/
 │   ├── _mint_utils.do       # Mint utilities (auto-generated)
-│   ├── ingest.do           # Data acquisition
-│   ├── clean.do            # Data cleaning
-│   └── validate.do         # Data validation
+│   ├── ingest.do           # Data acquisition (runs from src/)
+│   ├── clean.do            # Data cleaning (runs from src/)
+│   └── validate.do         # Data validation (runs from src/)
 ├── .gitignore
 ├── .dvcignore
-└── dvc.yaml                # Pipeline configuration (stata -b do commands)
+└── dvc.yaml                # Pipeline configuration (cd src && stata -b do commands)
 ```
 
 ### Research Projects (`prj__*`)
@@ -390,6 +392,50 @@ mint update utils                        # Update mint utilities to latest versi
 ## Stata Integration
 
 mint provides seamless integration with Stata 16+ through native Python commands.
+
+### Cross-Platform Stata Detection
+
+mint automatically detects Stata executables on Windows, macOS, and Linux:
+
+- **macOS/Linux**: Searches PATH for `stata-mp` or `stata` using `shutil.which()`
+- **Windows**: Uses `where.exe` to find Stata installations, including common Program Files paths
+- **Fallback**: Allows manual override in `~/.mint/config.yaml`
+
+**Automatic Detection Examples:**
+```bash
+# macOS/Linux - detects stata-mp
+$ mint create data --name analysis --lang stata
+✅ Stata detected: stata-mp
+
+# Windows - detects Stata installation
+> mint create data --name analysis --lang stata
+✅ Stata detected: C:\Program Files\Stata18\StataMP-64.exe
+```
+
+**Manual Configuration:**
+```yaml
+# ~/.mint/config.yaml
+tools:
+  stata:
+    executable: "/custom/path/to/stata"  # Override auto-detection
+    detected_path: "stata-mp"            # Last successful detection
+```
+
+### Platform-Aware Script Execution
+
+Scripts run from the `src/` directory with platform-appropriate commands:
+
+**macOS/Linux:**
+```yaml
+cmd: cd src && stata-mp -b do ingest.do
+```
+
+**Windows:**
+```yaml
+cmd: cd src & stata-mp -b do ingest.do
+```
+
+This ensures consistent path handling regardless of platform, with Stata scripts using relative paths (`../data/` for data directories).
 
 ### Installation for Stata Users
 

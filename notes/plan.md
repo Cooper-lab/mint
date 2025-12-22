@@ -1073,6 +1073,19 @@ rm -rf /tmp/data_test_project
 - Preserves user scripts while updating mint-generated utilities
 - Updates mint version in metadata
 
+### ✅ Cross-Platform Stata Detection & Script Execution
+- **Automatic Stata Detection**: Detects stata-mp/stata on Windows, macOS, and Linux
+- **Platform-Aware Commands**: Uses appropriate command chaining (`&&` vs `&`) for DVC pipelines
+- **Script Directory Execution**: All scripts run from `src/` directory for consistent path handling
+- **Configuration Integration**: Stata paths stored in `~/.mint/config.yaml` with auto-detection fallback
+- **Path Consistency**: Stata scripts use `../data/` for data directories when running from `src/`
+
+**Cross-Platform Implementation:**
+- Windows: `where.exe` + Program Files paths for Stata detection
+- macOS/Linux: `shutil.which()` for PATH-based detection
+- DVC Commands: `cd src && stata-mp -b do ingest.do` (Unix) vs `cd src & stata-mp -b do ingest.do` (Windows)
+- Template Updates: All language templates updated for `src/` directory execution
+
 ## Checklist Summary
 
 | Phase | Task | Status |
@@ -1090,6 +1103,8 @@ rm -rf /tmp/data_test_project
 | 5 | Stata wrapper | ✅ |
 | 6 | Registry integration (GitOps) | ✅ |
 | 6 | Mint utilities & logging | ✅ |
+| 6 | Cross-platform Stata detection | ✅ |
+| 6 | Script directory execution | ✅ |
 | 6 | Unit tests (47/47 passing) | ✅ |
 | 6 | Documentation | ✅ |
 
