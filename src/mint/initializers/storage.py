@@ -23,11 +23,12 @@ def _is_command_available(command: str) -> bool:
     return shutil.which(command) is not None
 
 
-def create_bucket(project_name: str) -> str:
+def create_bucket(project_name: str, sensitivity: str = "restricted") -> str:
     """Create a new S3-compatible bucket with versioning enabled.
 
     Args:
         project_name: Name of the project (used in bucket naming)
+        sensitivity: Data sensitivity level ("public", "restricted", "confidential")
 
     Returns:
         Name of the created bucket
@@ -42,9 +43,9 @@ def create_bucket(project_name: str) -> str:
     if not storage.get("bucket_prefix"):
         raise ValueError("Bucket prefix not configured. Run 'mint config' to set it up.")
 
-    # Create bucket name: {bucket_prefix}-{project_name}
+    # Create bucket name: {bucket_prefix}-{sensitivity}-{project_name}
     # Convert to lowercase and replace underscores with hyphens for S3 compatibility
-    bucket_name = f"{storage['bucket_prefix']}-{project_name}".lower().replace("_", "-")
+    bucket_name = f"{storage['bucket_prefix']}-{sensitivity}-{project_name}".lower().replace("_", "-")
 
     try:
         # Get credentials
@@ -101,12 +102,13 @@ def create_bucket(project_name: str) -> str:
         raise RuntimeError(f"Failed to create bucket: {e}")
 
 
-def init_dvc(project_path: Path, bucket_name: str) -> None:
+def init_dvc(project_path: Path, bucket_name: str, sensitivity: str = "restricted") -> None:
     """Initialize DVC and configure S3 remote.
 
     Args:
         project_path: Path to the project directory
         bucket_name: Name of the S3 bucket to use as remote
+        sensitivity: Data sensitivity level ("public", "restricted", "confidential")
 
     Raises:
         RuntimeError: If DVC operations fail
@@ -118,8 +120,9 @@ def init_dvc(project_path: Path, bucket_name: str) -> None:
         # Initialize DVC
         _run_dvc_command(project_path, ["init"])
 
-        # Add remote
-        remote_url = f"s3://{bucket_name}/"
+        # Add remote with sensitivity-based path prefix
+        sensitivity_path = sensitivity.lower()  # "public", "restricted", or "confidential"
+        remote_url = f"s3://{bucket_name}/{sensitivity_path}/"
         _run_dvc_command(project_path, ["remote", "add", "-d", "storage", remote_url])
 
         # Configure remote settings
@@ -131,6 +134,12 @@ def init_dvc(project_path: Path, bucket_name: str) -> None:
         if storage.get("region"):
             _run_dvc_command(project_path, [
                 "remote", "modify", "storage", "region", storage["region"]
+            ])
+
+        # Enable cloud versioning support
+        if storage.get("versioning", True):
+            _run_dvc_command(project_path, [
+                "remote", "modify", "storage", "version_aware", "true"
             ])
 
     except Exception as e:

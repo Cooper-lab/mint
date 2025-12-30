@@ -31,13 +31,18 @@
   "repository": {
     "github_url": "https://github.com/{{ registry_org }}/{{ full_project_name }}",
     "default_branch": "main",
-    "visibility": "private"
+    "visibility": "private",
+    "mirror": {
+      "url": "{{ mirror_url | default('') }}",
+      "purpose": "{{ mirror_purpose | default('external_collaboration') }}"
+    }
   },
   "storage": {
     "provider": "{{ storage_provider | default('s3') }}",
     "bucket": "{{ bucket_name | default('') }}",
     "endpoint": "{{ storage_endpoint | default('') }}",
-    "versioning": {{ storage_versioning | default(true) | lower }}
+    "versioning": {{ storage_versioning | default(true) | lower }},
+    "sensitivity": "{{ storage_sensitivity | default('restricted') }}"
   },
   "access_control": {
     "teams": [

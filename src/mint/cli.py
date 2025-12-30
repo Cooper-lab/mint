@@ -136,6 +136,151 @@ def update():
 @update.command()
 @click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
               help="Path to project directory (defaults to current directory)")
+@click.option("--sensitivity", type=click.Choice(["public", "restricted", "confidential"]),
+              help="Data sensitivity level (defaults to prompting)")
+@click.option("--mirror-url", help="Mirror repository URL for external collaboration")
+def metadata(path, sensitivity, mirror_url):
+    """Update metadata.json to latest schema with new fields."""
+    project_path = Path(path) if path else Path.cwd()
+
+    with console.status("Updating metadata.json..."):
+        try:
+            import json
+
+            # Load existing metadata
+            metadata_path = project_path / "metadata.json"
+            if not metadata_path.exists():
+                console.print("❌ metadata.json not found. Are you in a mint project directory?", style="red")
+                raise click.Abort()
+
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+
+            # Get current values
+            current_sensitivity = metadata.get("storage", {}).get("sensitivity", "restricted")
+            current_mirror_url = metadata.get("repository", {}).get("mirror", {}).get("url", "")
+
+            # Prompt for sensitivity if not provided
+            if sensitivity is None:
+                sensitivity = click.prompt(
+                    f"Storage sensitivity level",
+                    default=current_sensitivity,
+                    type=click.Choice(["public", "restricted", "confidential"])
+                )
+
+            # Prompt for mirror URL if not provided
+            if mirror_url is None:
+                mirror_url = click.prompt(
+                    f"Mirror repository URL (leave empty for none)",
+                    default=current_mirror_url
+                )
+
+            # Update metadata with new fields
+            if "storage" not in metadata:
+                metadata["storage"] = {}
+            metadata["storage"]["sensitivity"] = sensitivity
+
+            if mirror_url.strip():
+                if "repository" not in metadata:
+                    metadata["repository"] = {}
+                if "mirror" not in metadata["repository"]:
+                    metadata["repository"]["mirror"] = {}
+                metadata["repository"]["mirror"]["url"] = mirror_url.strip()
+                metadata["repository"]["mirror"]["purpose"] = "external_collaboration"
+
+            # Write updated metadata
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            console.print("✅ Updated metadata.json with new schema fields")
+            console.print(f"   - Storage sensitivity: {sensitivity}")
+            if mirror_url.strip():
+                console.print(f"   - Mirror URL: {mirror_url}")
+            else:
+                console.print("   - No mirror URL configured")
+
+        except Exception as e:
+            console.print(f"❌ Failed to update metadata: {e}", style="red")
+            raise click.Abort()
+
+
+@update.command()
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to project directory (defaults to current directory)")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompts")
+def storage(path, yes):
+    """Update DVC storage configuration to use new bucket naming (opt-in)."""
+    project_path = Path(path) if path else Path.cwd()
+
+    with console.status("Updating DVC storage configuration..."):
+        try:
+            import json
+            from .config import get_config
+            from .initializers.storage import init_dvc, is_dvc_repo
+
+            # Load existing metadata
+            metadata_path = project_path / "metadata.json"
+            if not metadata_path.exists():
+                console.print("❌ metadata.json not found. Are you in a mint project directory?", style="red")
+                raise click.Abort()
+
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+
+            # Check if DVC is initialized
+            if not is_dvc_repo(project_path):
+                console.print("❌ DVC is not initialized in this project.", style="red")
+                console.print("Run 'mint create' with --init-dvc or initialize DVC manually first.")
+                raise click.Abort()
+
+            # Get project info
+            project_name = metadata["project"]["name"]
+            full_name = metadata["project"]["full_name"]
+            sensitivity = metadata.get("storage", {}).get("sensitivity", "restricted")
+
+            # Get config for bucket prefix
+            config = get_config()
+            bucket_prefix = config.get("storage", {}).get("bucket_prefix")
+            if not bucket_prefix:
+                console.print("❌ Storage bucket_prefix not configured.", style="red")
+                console.print("Run 'mint config' to set up storage configuration.")
+                raise click.Abort()
+
+            # Calculate new bucket name
+            new_bucket_name = f"{bucket_prefix}-{sensitivity}-{project_name}".lower().replace("_", "-")
+
+            # Show what will change
+            console.print(f"📋 Current configuration will be updated:")
+            console.print(f"   - Project: {full_name}")
+            console.print(f"   - Sensitivity: {sensitivity}")
+            console.print(f"   - New bucket: {new_bucket_name}")
+            console.print(f"   - New remote URL: s3://{new_bucket_name}/{sensitivity}/")
+
+            if not yes:
+                if not click.confirm("⚠️  This will reconfigure your DVC remote. Data migration is not included. Continue?"):
+                    raise click.Abort()
+
+            # Reconfigure DVC remote
+            init_dvc(project_path, new_bucket_name, sensitivity)
+
+            console.print("✅ Updated DVC storage configuration")
+            console.print(f"   - Remote 'storage' now points to: s3://{new_bucket_name}/{sensitivity}/")
+            console.print(f"   - Cloud versioning is enabled (version_aware: true)")
+
+            console.print("\n📝 Next steps for data migration:")
+            console.print(f"   1. Create the bucket '{new_bucket_name}' if it doesn't exist")
+            console.print("   2. Copy data from old bucket to new bucket structure")
+            console.print("   3. Run 'dvc push' to upload data to the new location")
+            console.print("   4. Update any existing DVC files to reference the new remote")
+
+        except Exception as e:
+            console.print(f"❌ Failed to update storage configuration: {e}", style="red")
+            raise click.Abort()
+
+
+@update.command()
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to project directory (defaults to current directory)")
 def utils(path):
     """Update mint utility scripts to the latest version."""
     project_path = Path(path) if path else Path.cwd()

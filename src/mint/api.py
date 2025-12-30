@@ -79,6 +79,7 @@ def create_project(
         "storage_provider": config.get("storage", {}).get("provider", "s3"),
         "storage_endpoint": config.get("storage", {}).get("endpoint", ""),
         "storage_versioning": config.get("storage", {}).get("versioning", True),
+        "storage_sensitivity": "restricted",  # Default sensitivity level
         "bucket_name": "",  # Will be set later when DVC is implemented
         "project_type": project_type,
         "language": language,
@@ -113,7 +114,8 @@ def create_project(
 
     # Initialize DVC if requested
     if init_dvc:
-        _init_dvc(project_path, bucket_name)
+        sensitivity = context.get("storage_sensitivity", "restricted")
+        _init_dvc(project_path, bucket_name, sensitivity)
 
     # Register project with Data Commons Registry if requested
     registration_url = None
@@ -153,7 +155,7 @@ def _init_git(project_path: Path, use_current_repo: bool = False) -> None:
             init_git(project_path)
 
 
-def _init_dvc(project_path: Path, bucket_name: Optional[str] = None) -> None:
+def _init_dvc(project_path: Path, bucket_name: Optional[str] = None, sensitivity: str = "restricted") -> None:
     """Initialize DVC repository with S3 remote."""
     if not is_dvc_repo(project_path):
         # Determine bucket name
@@ -168,7 +170,7 @@ def _init_dvc(project_path: Path, bucket_name: Optional[str] = None) -> None:
                     project_name = parts[1]
 
             try:
-                bucket_name = create_bucket(project_name)
+                bucket_name = create_bucket(project_name, sensitivity)
             except Exception as e:
                 # Log warning but don't fail the project creation
                 # DVC initialization can be done later when credentials are properly configured
@@ -177,7 +179,7 @@ def _init_dvc(project_path: Path, bucket_name: Optional[str] = None) -> None:
                 return
 
         try:
-            init_dvc(project_path, bucket_name)
+            init_dvc(project_path, bucket_name, sensitivity)
         except Exception as e:
             # Log warning but don't fail the project creation
             print(f"Warning: Failed to initialize DVC: {e}")
