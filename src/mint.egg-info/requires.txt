@@ -5,6 +5,9 @@ rich>=13.0
 keyring>=24.0
 boto3>=1.28
 pyyaml>=6.0
+dvc>=3.0
+pygithub>=2.0.0
+requests>=2.25.0
 
 [dev]
 pytest>=7.0

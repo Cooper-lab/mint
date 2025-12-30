@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from mint.initializers.git import init_git, is_git_repo
-from mint.initializers.storage import init_dvc, create_bucket, is_dvc_repo
+from mint.initializers.storage import init_dvc, is_dvc_repo
 
 
 def test_git_repo_detection():
@@ -79,33 +79,7 @@ def test_dvc_initialization(mock_get_config, mock_cmd_available, mock_run_dvc):
         # Check that init and remote add were called
         call_args = [call[0][1] for call in mock_run_dvc.call_args_list]  # Get the command list
         assert ["init"] in call_args
-        assert ["remote", "add", "-d", "storage", "s3://test-bucket/"] in call_args
-
-
-@patch('mint.initializers.storage.boto3.client')
-@patch('mint.initializers.storage.get_storage_credentials')
-@patch('mint.initializers.storage.get_config')
-def test_bucket_creation(mock_get_config, mock_get_creds, mock_boto3_client):
-    """Test bucket creation."""
-    # Mock configuration
-    mock_get_config.return_value = {
-        "storage": {
-            "provider": "s3",
-            "bucket_prefix": "testlab",
-            "region": "us-east-1"
-        }
-    }
-    mock_get_creds.return_value = ("test_key", "test_secret")
-
-    # Mock S3 client
-    mock_client = MagicMock()
-    mock_boto3_client.return_value = mock_client
-
-    bucket_name = create_bucket("myproject")
-
-    assert bucket_name == "testlab-myproject"
-    mock_client.create_bucket.assert_called_once()
-    mock_client.put_bucket_versioning.assert_called_once()
+        assert ["remote", "add", "--global", "-d", "storage", "s3://test-bucket/lab/"] in call_args
 
 
 @patch('mint.initializers.git._run_git_command')

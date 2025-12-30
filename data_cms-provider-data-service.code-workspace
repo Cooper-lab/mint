@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../git-yale/cooper-lab/data_cms-provider-data-service"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../mint-registry"
+		}
+	],
+	"settings": {}
+}
