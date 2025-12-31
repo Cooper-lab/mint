@@ -129,6 +129,49 @@ def infra(name: str, path: str, lang: str, no_git: bool, no_dvc: bool, bucket: s
             raise click.Abort()
 
 
+@create.command()
+@click.option("--name", "-n", required=True, help="Project name")
+@click.option("--path", "-p", default=".", help="Output directory")
+@click.option("--registry-url", required=True, help="Data Commons Registry GitHub URL (e.g., https://github.com/org/data-registry)")
+@click.option("--no-git", is_flag=True, help="Skip Git initialization")
+def enclave(name: str, path: str, registry_url: str, no_git: bool):
+    """Create a secure data enclave workspace (enclave_{name})."""
+    # Validate registry URL format
+    import re
+    if not re.match(r'^https://github\.com/[^/]+/[^/]+/?$', registry_url):
+        console.print("❌ Invalid registry URL format. Expected: https://github.com/org/repo", style="red")
+        raise click.Abort()
+
+    from .api import create_project
+
+    with console.status("Scaffolding enclave..."):
+        try:
+            result = create_project(
+                project_type="enclave",
+                name=name,
+                path=path,
+                language="python",  # Enclaves use Python for scripts
+                init_git=not no_git,
+                init_dvc=False,  # Enclaves don't need DVC
+                bucket_name=None,
+                register_project=False,  # Enclaves aren't registered in the registry
+                use_current_repo=False,
+                registry_url=registry_url,  # Pass registry URL
+            )
+            console.print(f"✅ Created: {result.full_name}", style="green")
+            console.print(f"   Location: {result.path}", style="dim")
+            console.print(f"   Registry: {registry_url}", style="dim")
+            console.print()
+            console.print("Next steps:")
+            console.print("  1. cd " + str(result.path))
+            console.print("  2. Run 'mint enclave add <repo-name>' to add approved data products")
+            console.print("  3. Run './scripts/pull_data.sh --all' to download data")
+            console.print("  4. Run './scripts/package_transfer.sh' to create transfer packages")
+        except Exception as e:
+            console.print(f"❌ Error: {e}", style="red")
+            raise click.Abort()
+
+
 @main.group()
 def update():
     """Update project components."""
@@ -335,7 +378,6 @@ def utils(path):
     with console.status("Updating utility scripts..."):
         try:
             from .registry import load_project_metadata
-            from pathlib import Path
             import json
 
             # Load existing metadata to get project info
@@ -353,9 +395,8 @@ def utils(path):
             language = metadata.get("language", "python")  # Try to get from metadata, fallback to python
 
             # Get mint version info for updating metadata
-            from ..templates.base import BaseTemplate
-            template = BaseTemplate()
-            mint_info = template._get_mint_info()
+            from .templates.base import BaseTemplate
+            mint_info = BaseTemplate._get_mint_info()
 
             # Update metadata with new mint version
             metadata["mint"] = {
@@ -370,7 +411,7 @@ def utils(path):
             console.print(f"✅ Updated mint version in metadata.json to {mint_info['mint_version']}")
 
             # Regenerate utility scripts
-            from .templates import DataTemplate, ProjectTemplate, InfraTemplate
+            from .templates import DataTemplate, ProjectTemplate, InfraTemplate, EnclaveTemplate
 
             if project_type == "data":
                 template_class = DataTemplate
@@ -378,6 +419,8 @@ def utils(path):
                 template_class = ProjectTemplate
             elif project_type == "infra":
                 template_class = InfraTemplate
+            elif project_type == "enclave":
+                template_class = EnclaveTemplate
             else:
                 console.print(f"❌ Unknown project type: {project_type}", style="red")
                 raise click.Abort()
@@ -658,6 +701,335 @@ def setup(set_value, set_credentials):
     else:
         # Interactive setup
         init_config()
+
+
+@main.group()
+def enclave():
+    """Manage enclave data transfers and workspace."""
+    pass
+
+
+@enclave.command()
+@click.argument("repo_name")
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+@click.option("--no-pull", is_flag=True, help="Add to approved list without pulling data")
+def add(repo_name, path, no_pull):
+    """Add a data product to the enclave's approved list and automatically pull the data.
+
+    By default, this command will add the product to the approved list and immediately
+    attempt to pull/download the data. Use --no-pull to add without downloading."""
+    from pathlib import Path
+    import yaml
+    import subprocess
+
+    enclave_path = Path(path) if path else Path.cwd()
+    manifest_path = enclave_path / "enclave_manifest.yaml"
+
+    if not manifest_path.exists():
+        console.print(f"❌ Enclave manifest not found: {manifest_path}", style="red")
+        raise click.Abort()
+
+    # Load manifest
+    with open(manifest_path, 'r') as f:
+        manifest = yaml.safe_load(f)
+
+    # Check if already approved
+    approved = manifest.setdefault('approved_products', [])
+    existing = any(item['repo'] == repo_name for item in approved)
+
+    if existing:
+        console.print(f"⚠ Repository '{repo_name}' is already approved in this enclave.")
+        if not no_pull:
+            console.print("Attempting to pull latest data anyway...")
+        else:
+            return
+
+    if not existing:
+        # Add to approved list (basic structure - user can edit details)
+        approved.append({
+            'repo': repo_name,
+            'registry_entry': f"catalog/data/{repo_name}.yaml",
+            'stage': 'final'
+        })
+
+        # Save manifest
+        with open(manifest_path, 'w') as f:
+            yaml.dump(manifest, f, default_flow_style=False, sort_keys=False)
+
+        console.print(f"✅ Added '{repo_name}' to approved products.")
+
+    # Pull the data unless --no-pull is specified
+    if not no_pull:
+        console.print(f"📥 Pulling data for '{repo_name}'...")
+        script_path = enclave_path / "scripts" / "pull_data.sh"
+
+        if not script_path.exists():
+            console.print(f"❌ Pull script not found: {script_path}", style="red")
+            console.print("Data will need to be pulled manually later.")
+            return
+
+        # Run the pull script for this specific repo
+        try:
+            result = subprocess.run([str(script_path), repo_name],
+                                  cwd=enclave_path, check=True,
+                                  capture_output=True, text=True)
+            console.print("✅ Data pull completed successfully.")
+        except subprocess.CalledProcessError as e:
+            console.print(f"❌ Data pull failed: {e.stderr}", style="red")
+            console.print("You can try pulling manually later with:")
+            console.print(f"  ./scripts/pull_data.sh {repo_name}")
+    else:
+        console.print("Edit enclave_manifest.yaml to customize registry entry and stage if needed.")
+
+
+@enclave.command()
+@click.argument("repo_name", required=False)
+@click.option("--all", "-a", "pull_all", is_flag=True, help="Pull latest for all approved products")
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+def pull(repo_name, pull_all, path):
+    """Pull data products from registry (networked machine only)."""
+    from pathlib import Path
+    import subprocess
+
+    enclave_path = Path(path) if path else Path.cwd()
+    script_path = enclave_path / "scripts" / "pull_data.sh"
+
+    if not script_path.exists():
+        console.print(f"❌ Pull script not found: {script_path}", style="red")
+        console.print("Make sure you're in an enclave project directory.")
+        raise click.Abort()
+
+    # Build command arguments
+    cmd = [str(script_path)]
+    if pull_all:
+        cmd.append("--all")
+    elif repo_name:
+        cmd.append(repo_name)
+
+    # Run the pull script
+    try:
+        result = subprocess.run(cmd, cwd=enclave_path, check=True)
+    except subprocess.CalledProcessError as e:
+        console.print(f"❌ Pull failed with exit code {e.returncode}", style="red")
+        raise click.Abort()
+
+
+@enclave.command()
+@click.option("--name", "-n", help="Transfer package name")
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+def package(name, path):
+    """Package downloaded data for transfer to enclave."""
+    from pathlib import Path
+    import subprocess
+
+    enclave_path = Path(path) if path else Path.cwd()
+    script_path = enclave_path / "scripts" / "package_transfer.sh"
+
+    if not script_path.exists():
+        console.print(f"❌ Package script not found: {script_path}", style="red")
+        console.print("Make sure you're in an enclave project directory.")
+        raise click.Abort()
+
+    # Build command arguments
+    cmd = [str(script_path)]
+    if name:
+        cmd.extend(["--name", name])
+
+    # Run the package script
+    try:
+        result = subprocess.run(cmd, cwd=enclave_path, check=True)
+    except subprocess.CalledProcessError as e:
+        console.print(f"❌ Packaging failed with exit code {e.returncode}", style="red")
+        raise click.Abort()
+
+
+@enclave.command()
+@click.argument("transfer_dir", type=click.Path(exists=True, path_type=Path))
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+def verify(transfer_dir, path):
+    """Verify transfer integrity on enclave."""
+    from pathlib import Path
+    import subprocess
+
+    enclave_path = Path(path) if path else Path.cwd()
+    script_path = enclave_path / "scripts" / "verify_transfer.sh"
+
+    if not script_path.exists():
+        console.print(f"❌ Verify script not found: {script_path}", style="red")
+        console.print("Make sure you're in an enclave project directory.")
+        raise click.Abort()
+
+    # Run the verify script
+    try:
+        result = subprocess.run([str(script_path), str(transfer_dir)],
+                              cwd=enclave_path, check=True)
+    except subprocess.CalledProcessError as e:
+        console.print(f"❌ Verification failed with exit code {e.returncode}", style="red")
+        raise click.Abort()
+
+
+@enclave.command()
+@click.argument("repo_name", required=False)
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+def list(repo_name, path):
+    """List approved and transferred data products."""
+    from pathlib import Path
+    import yaml
+
+    enclave_path = Path(path) if path else Path.cwd()
+    manifest_path = enclave_path / "enclave_manifest.yaml"
+
+    if not manifest_path.exists():
+        console.print(f"❌ Enclave manifest not found: {manifest_path}", style="red")
+        raise click.Abort()
+
+    # Load manifest
+    with open(manifest_path, 'r') as f:
+        manifest = yaml.safe_load(f)
+
+    # Filter by repo if specified
+    approved = manifest.get('approved_products', [])
+    transferred = manifest.get('transferred', [])
+
+    if repo_name:
+        approved = [item for item in approved if item['repo'] == repo_name]
+        transferred = [item for item in transferred if item['repo'] == repo_name]
+
+    console.print(f"Enclave Status{' for ' + repo_name if repo_name else ''}:")
+    console.print("-" * 40)
+
+    console.print(f"Approved Products: {len(approved)}")
+    for item in approved:
+        repo = item['repo']
+        transferred_count = len([t for t in transferred if t['repo'] == repo])
+        console.print(f"  • {repo} ({transferred_count} versions transferred)")
+
+    if transferred:
+        console.print(f"\nTransferred Data: {len(transferred)}")
+        for item in transferred:
+            repo = item['repo']
+            version = item['dvc_hash'][:7]
+            date = item.get('transfer_date', 'unknown')
+            console.print(f"  • {repo}: {version} ({date})")
+
+
+@main.group()
+def manifest():
+    """Manage file manifests for change detection."""
+
+
+@manifest.command()
+@click.option("--directory", "-d", required=True, type=click.Path(exists=True, path_type=Path),
+              help="Directory to scan for files")
+@click.option("--pattern", "-p", default="*", help="File pattern to match (default: *)")
+@click.option("--output", "-o", type=click.Path(path_type=Path),
+              help="Manifest output path (default: manifest.json in current directory)")
+def create(directory: Path, pattern: str, output: Path):
+    """Create or update a file manifest for change detection."""
+    from .manifest import create_manifest
+
+    try:
+        if output is None:
+            output = Path.cwd() / "manifest.json"
+
+        with console.status("Creating manifest..."):
+            manifest = create_manifest(directory, pattern, output, base_directory=Path.cwd())
+
+        file_count = len(manifest.get("files", {}))
+        console.print(f"✅ Created manifest with {file_count} files", style="green")
+        console.print(f"   Saved to: {output}")
+
+    except Exception as e:
+        console.print(f"❌ Error creating manifest: {e}", style="red")
+        raise click.Abort()
+
+
+@manifest.command()
+@click.argument("filepath", type=click.Path(path_type=Path))
+@click.option("--manifest", "-m", type=click.Path(exists=True, path_type=Path),
+              help="Path to manifest file (default: manifest.json in current directory)")
+def check(filepath: Path, manifest: Path):
+    """Check if a file has changed compared to the manifest."""
+    from .manifest import load_manifest, has_file_changed
+
+    try:
+        if manifest is None:
+            manifest_path = Path.cwd() / "manifest.json"
+        else:
+            manifest_path = manifest
+
+        if not manifest_path.exists():
+            console.print("❌ Manifest file not found", style="red")
+            raise click.Abort()
+
+        manifest_data = load_manifest(manifest_path)
+
+        if has_file_changed(filepath, manifest_data, base_directory=Path.cwd()):
+            console.print(f"📝 File has changed: {filepath}", style="yellow")
+            return 1  # Exit code for changed
+        else:
+            console.print(f"✅ File unchanged: {filepath}", style="green")
+            return 0  # Exit code for unchanged
+
+    except Exception as e:
+        console.print(f"❌ Error checking file: {e}", style="red")
+        raise click.Abort()
+
+
+@manifest.command()
+@click.option("--directory", "-d", required=True, type=click.Path(exists=True, path_type=Path),
+              help="Directory to scan for files")
+@click.option("--pattern", "-p", default="*", help="File pattern to match (default: *)")
+@click.option("--manifest", "-m", type=click.Path(exists=True, path_type=Path),
+              help="Path to manifest file (default: manifest.json in current directory)")
+def status(directory: Path, pattern: str, manifest: Path):
+    """Show status of files in a directory compared to manifest."""
+    from .manifest import load_manifest, get_files_to_update, get_unchanged_files
+
+    try:
+        if manifest is None:
+            manifest_path = Path.cwd() / "manifest.json"
+        else:
+            manifest_path = manifest
+
+        if not manifest_path.exists():
+            console.print("❌ Manifest file not found", style="red")
+            raise click.Abort()
+
+        manifest_data = load_manifest(manifest_path)
+
+        changed_files = get_files_to_update(directory, manifest_data, pattern, base_directory=Path.cwd())
+        unchanged_files = get_unchanged_files(directory, manifest_data, pattern, base_directory=Path.cwd())
+
+        console.print(f"📊 Manifest status for {directory}")
+        console.print(f"   Pattern: {pattern}")
+        console.print(f"   Manifest: {manifest_path}")
+        console.print()
+
+        if changed_files:
+            console.print(f"📝 Changed files ({len(changed_files)}):", style="yellow")
+            for f in changed_files[:10]:  # Show first 10
+                console.print(f"   • {f}")
+            if len(changed_files) > 10:
+                console.print(f"   ... and {len(changed_files) - 10} more")
+        else:
+            console.print("✅ No changed files found", style="green")
+
+        if unchanged_files:
+            console.print(f"✅ Unchanged files ({len(unchanged_files)}):", style="green")
+            for f in unchanged_files[:10]:  # Show first 10
+                console.print(f"   • {f}")
+            if len(unchanged_files) > 10:
+                console.print(f"   ... and {len(unchanged_files) - 10} more")
+
+    except Exception as e:
+        console.print(f"❌ Error getting status: {e}", style="red")
+        raise click.Abort()
 
 
 if __name__ == "__main__":

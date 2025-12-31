@@ -348,31 +348,92 @@ infra_{name}/
 **Directory Structure:**
 ```
 enclave_{name}/
-├── README.md               # Enclave documentation and data access guide
-├── metadata.json           # Enclave metadata and approved data products
-├── requirements.txt        # Python dependencies for data access
-├── data/                   # Versioned data products organized by source repo
-│   └── .gitkeep            # Initially empty, populated by data pulls
+├── README.md
+├── metadata.json
+├── enclave_manifest.yaml        # Source of truth for sync state
+├── requirements.txt
+├── data/
+│   └── {repo_name}/
+│       └── {hash}-{date}/
+│           ├── _checksums.sha256
+│           └── final/
 ├── src/
-│   ├── __init__.py
-│   ├── registry.py         # Registry querying and data discovery
-│   ├── download.py         # Data download and organization scripts
-│   ├── validate.py         # Data integrity and access validation
-│   └── r/
-│       └── .gitkeep
+│   ├── registry.py              # Query registry catalog
+│   ├── download.py              # Pull via DVC with duplicate check
+│   ├── package.py               # Create transfer archives
+│   └── verify.py                # Checksum verification
 ├── scripts/
-│   ├── setup_data.sh       # Automated data setup script
-│   └── update_data.sh      # Data update and refresh script
-├── .gitignore
-└── .dvcignore
+│   ├── pull_data.sh
+│   ├── package_transfer.sh
+│   ├── unpack_transfer.sh
+│   └── verify_transfer.sh
+└── transfers/
+```
+
+**Architecture Diagram:**
+```mermaid
+flowchart LR
+    subgraph networked [Networked Machine]
+        Registry[(Data Registry)]
+        EnclaveRepo[enclave_repo]
+        DVC[(DVC Remote S3)]
+    end
+
+    subgraph transfer [Physical Transfer]
+        Package[Transfer Package]
+    end
+
+    subgraph enclave [Secure Enclave]
+        EnclaveData[Data Directory]
+        Manifest[Manifest File]
+    end
+
+    Registry -->|catalog lookup| EnclaveRepo
+    DVC -->|dvc pull| EnclaveRepo
+    EnclaveRepo -->|package| Package
+    Package -->|USB/SFTP| EnclaveData
 ```
 
 **Key Features:**
 - Registry integration to discover approved data products
 - Versioned data organization: `data/{repo_name}/{hash}-{date}/`
-- Secure enclave workflow for sensitive data access
-- Automated data download and integrity validation
-- Access control and audit logging
+- Secure enclave workflow for air-gapped environments
+- Duplicate warning when adding existing versions
+- Bulk pull latest versions of all approved products
+- Simple checksum validation for data integrity
+
+**CLI Commands:**
+| Command | Description |
+|---------|-------------|
+| `mint enclave add <repo>` | Add a data product to approved list |
+| `mint enclave pull <repo>` | Pull specific repo (warns if exists) |
+| `mint enclave pull --all` | Pull latest for all approved products |
+| `mint enclave package` | Create transfer archive |
+| `mint enclave verify` | Verify transfer on enclave side |
+| `mint enclave list` | Show all approved products and status |
+
+**Manifest Structure (`enclave_manifest.yaml`):**
+```yaml
+schema_version: "1.0"
+enclave_name: "research_enclave_2025"
+
+approved_products:
+  - repo: "data_cms-provider-data-service"
+    registry_entry: "catalog/data/data_cms-provider-data-service.yaml"
+    stage: "final"
+
+downloaded:
+  - repo: "data_cms-provider-data-service"
+    dvc_hash: "def5678"
+    git_commit: "abc123"
+    downloaded_at: "2025-05-20T14:00:00Z"
+
+transferred:
+  - repo: "data_cms-provider-data-service"
+    dvc_hash: "abc1234"
+    transfer_date: "2025-03-01"
+    path: "data/data_cms-provider-data-service/abc1234-2025-03-01/"
+```
 
 ---
 

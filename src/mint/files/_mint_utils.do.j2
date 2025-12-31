@@ -351,3 +351,75 @@ program define find_data_files
     * Return sorted list
     display "`found_files'"
 end
+
+* =============================================================================
+* FILE MANIFEST UTILITIES (Python-backed)
+* =============================================================================
+
+capture program drop manifest_create
+program define manifest_create
+    * Create/update manifest for a directory
+    * Usage: manifest_create "data/raw" "*.csv"
+    args directory pattern
+
+python:
+from mint.manifest import create_manifest
+import os
+# Convert Stata paths to Python paths
+python_directory = "`directory'".replace("\\", "/")
+python_pattern = "`pattern'" if "`pattern'" != "" else "*"
+# Run from project root (parent of src/)
+project_root = os.path.dirname(os.getcwd())
+os.chdir(project_root)
+result = create_manifest(python_directory, python_pattern)
+end
+end
+
+capture program drop manifest_file_changed
+program define manifest_file_changed, rclass
+    * Check if a file has changed since last manifest
+    * Returns r(changed) = 1 if changed, 0 if unchanged
+    * Usage: manifest_file_changed "data/raw/file.csv"
+    args filepath
+
+python:
+from sfi import Scalar
+from mint.manifest import load_manifest, has_file_changed
+import os
+# Run from project root (parent of src/)
+project_root = os.path.dirname(os.getcwd())
+os.chdir(project_root)
+try:
+    manifest = load_manifest("manifest.json")
+    changed = 1 if has_file_changed("`filepath'", manifest) else 0
+except FileNotFoundError:
+    changed = 1  # No manifest = consider changed
+except Exception as e:
+    changed = 1  # Error loading manifest = consider changed
+Scalar.setValue("r(changed)", changed)
+end
+end
+
+capture program drop manifest_get_changed_files
+program define manifest_get_changed_files
+    * Get list of files that have changed in a directory
+    * Usage: manifest_get_changed_files "data/raw" "*.csv"
+    args directory pattern
+
+python:
+from mint.manifest import load_manifest, get_files_to_update
+import os
+# Run from project root (parent of src/)
+project_root = os.path.dirname(os.getcwd())
+os.chdir(project_root)
+try:
+    manifest = load_manifest("manifest.json")
+    changed_files = get_files_to_update("`directory'", manifest, "`pattern'")
+    # Print space-separated list
+    print(" ".join(changed_files))
+except FileNotFoundError:
+    print("No manifest found")
+except Exception as e:
+    print(f"Error: {e}")
+end
+end

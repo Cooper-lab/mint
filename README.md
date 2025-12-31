@@ -685,6 +685,80 @@ mint registry sync
 - **✅ PR Tracking**: Provides links to registration pull requests
 - **✅ Access Control**: Automatic permission synchronization via GitHub Actions
 
+### GitHub CLI & Git Commands Used
+
+mint uses a **GitOps architecture** where all GitHub operations happen via standard Git and the GitHub CLI (`gh`), eliminating the need for personal access tokens.
+
+#### GitHub CLI Commands
+
+| Command | Purpose |
+|---------|---------|
+| `gh auth login` | One-time authentication setup (required prerequisite) |
+| `gh pr create --title "..." --body "..." --head <branch> --base main` | Creates pull requests for project registration |
+| `gh pr list --state open --json title,url,headRefName` | Checks registration status by listing open PRs |
+
+#### Git Commands (via subprocess)
+
+| Command | Purpose |
+|---------|---------|
+| `git clone git@github.com:<org>/<repo>.git` | Clones registry repository via SSH |
+| `git checkout -b register-<project_name>` | Creates feature branch for registration |
+| `git add .` | Stages catalog entry changes |
+| `git commit -m "Register new project: <name>"` | Commits the catalog entry |
+| `git push -u origin <branch>` | Pushes branch to trigger PR workflow |
+
+#### GitOps Registration Flow
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     User's Machine                              │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  mint create data --name medicare --lang python --register│  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                            │                                    │
+│      1. Scaffold project   │                                    │
+│      2. git clone (SSH)    ▼                                    │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Clone registry repo → Create branch → Write YAML →      │  │
+│  │  git commit → git push → gh pr create                     │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    GitHub Actions Runner                        │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  validate-catalog.yml  (on PR)                            │  │
+│  │  - Validate YAML schema                                   │  │
+│  │  - Check naming conventions                               │  │
+│  │  - Verify access control requirements                     │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  sync-permissions.yml  (on merge to main)                 │  │
+│  │  - Read access_control from catalog YAML                  │  │
+│  │  - Sync GitHub team permissions to repository             │  │
+│  │  - Apply collaborator settings                            │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Why Tokenless?
+
+Traditional approaches require personal access tokens (PATs) that:
+
+- Need manual rotation and secure storage
+- Are tied to individual user accounts  
+- Can become security vulnerabilities if leaked
+
+The GitOps approach instead uses:
+
+- **SSH Keys**: Already configured for git operations, managed by user
+- **GitHub CLI**: Handles OAuth flow securely via `gh auth login`
+- **GitHub Actions**: Workflows run with `GITHUB_TOKEN` (automatic, scoped, rotated)
+
+This separation means users never handle long-lived tokens, and all sensitive operations happen in controlled GitHub Actions environments.
+
 ## Python API
 
 Use mint programmatically in Python:

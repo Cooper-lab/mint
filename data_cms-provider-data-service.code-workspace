@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../mint-registry"
+		},
+		{
+			"path": "../../../git-yale/cooper-lab/data-registry"
 		}
 	],
 	"settings": {}

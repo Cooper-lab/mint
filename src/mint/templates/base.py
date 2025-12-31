@@ -47,7 +47,8 @@ class BaseTemplate(ABC):
 
         self.language = "python"  # Default language
 
-    def _get_mint_info(self) -> Dict[str, str]:
+    @staticmethod
+    def _get_mint_info() -> Dict[str, str]:
         """Get mint version and commit hash information."""
         version = __version__
 

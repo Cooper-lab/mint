@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from .templates import DataTemplate, ProjectTemplate, InfraTemplate
+from .templates import DataTemplate, ProjectTemplate, InfraTemplate, EnclaveTemplate
 from .config import get_config, get_stata_executable, get_platform_info
 from .initializers.git import init_git, is_git_repo
 from .initializers.storage import init_dvc, is_dvc_repo
@@ -30,11 +30,12 @@ def create_project(
     bucket_name: Optional[str] = None,
     register_project: bool = False,
     use_current_repo: bool = False,
+    registry_url: Optional[str] = None,
 ) -> ProjectResult:
     """Main API function called by both CLI and Stata.
 
     Args:
-        project_type: Type of project ("data", "project", or "infra")
+        project_type: Type of project ("data", "project", "infra", or "enclave")
         name: Project name (without prefix)
         path: Directory to create project in
         language: Primary programming language ("python", "r", or "stata")
@@ -43,6 +44,7 @@ def create_project(
         bucket_name: Override bucket name for DVC
         register_project: Whether to register project with Data Commons Registry
         use_current_repo: Whether to use current directory as project root (when in existing git repo)
+        registry_url: Data Commons Registry GitHub URL (required for enclaves)
 
     Returns:
         ProjectResult with creation details
@@ -84,6 +86,8 @@ def create_project(
         "project_type": project_type,
         "language": language,
         "use_current_repo": use_current_repo,
+        # Registry context for enclave configuration
+        "registry_url": registry_url or "",
         # Platform-specific context for cross-platform support
         "platform_os": platform_info["os"],  # 'windows', 'macos', or 'linux'
         "command_sep": platform_info["command_separator"],  # '&&' or '&'
@@ -102,6 +106,8 @@ def create_project(
         project_type = "project"  # Normalize
     elif project_type == "infra":
         template = InfraTemplate()
+    elif project_type == "enclave":
+        template = EnclaveTemplate()
     else:
         raise ValueError(f"Unknown project type: {project_type}")
 
