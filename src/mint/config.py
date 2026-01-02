@@ -191,7 +191,7 @@ def init_config() -> None:
     """
     from rich.console import Console
     from rich.prompt import Prompt, Confirm
-    from .utils import get_platform, detect_stata_executable
+    from .utils import get_platform, detect_stata_executable, detect_gh_cli, check_gh_auth, get_gh_install_instructions
 
     console = Console()
 
@@ -262,6 +262,77 @@ def init_config() -> None:
         default="cooper-lab"
     )
     config["registry"]["org"] = registry_org
+
+    # GitHub CLI Setup
+    console.print("\n[bold blue]GitHub CLI Setup[/bold blue]")
+    console.print("GitHub CLI (gh) is required for project registration.\n")
+
+    import subprocess
+
+    gh_path = detect_gh_cli()
+
+    if gh_path:
+        console.print(f"✅ GitHub CLI detected: [green]{gh_path}[/green]")
+
+        # Check authentication status
+        is_authed, auth_info = check_gh_auth()
+
+        if is_authed:
+            console.print(f"✅ Authenticated as: [green]{auth_info}[/green]")
+            config["tools"]["github_cli"] = {"installed": True, "authenticated": True, "user": auth_info}
+        else:
+            console.print(f"[yellow]⚠️  GitHub CLI is not authenticated[/yellow]")
+            console.print(f"   Status: {auth_info}\n")
+
+            run_auth = Confirm.ask("Would you like to authenticate now?", default=True)
+
+            if run_auth:
+                console.print("\n[bold]Starting GitHub CLI authentication...[/bold]")
+                console.print("[dim]This will open a browser window for authentication.[/dim]\n")
+
+                try:
+                    # Run gh auth login interactively
+                    result = subprocess.run(
+                        ["gh", "auth", "login", "--web", "--git-protocol", "ssh"],
+                        check=False  # Don't raise on non-zero exit
+                    )
+
+                    if result.returncode == 0:
+                        console.print("\n✅ GitHub CLI authenticated successfully!")
+                        config["tools"]["github_cli"] = {"installed": True, "authenticated": True}
+                    else:
+                        console.print("\n[yellow]⚠️  Authentication may not have completed.[/yellow]")
+                        console.print("You can run 'gh auth login' manually later.")
+                        config["tools"]["github_cli"] = {"installed": True, "authenticated": False}
+                except Exception as e:
+                    console.print(f"\n[red]❌ Error during authentication: {e}[/red]")
+                    console.print("Please run 'gh auth login' manually.")
+                    config["tools"]["github_cli"] = {"installed": True, "authenticated": False}
+            else:
+                console.print("\n[dim]Skipping authentication. Run 'gh auth login' before using registry features.[/dim]")
+                config["tools"]["github_cli"] = {"installed": True, "authenticated": False}
+    else:
+        console.print("[yellow]⚠️  GitHub CLI (gh) not found[/yellow]")
+        console.print("GitHub CLI is required for project registration features.\n")
+
+        # Show installation instructions
+        instructions = get_gh_install_instructions()
+        console.print("[bold]Installation Instructions:[/bold]")
+        console.print(instructions)
+
+        # Ask if user wants to continue without it
+        continue_setup = Confirm.ask(
+            "Continue setup without GitHub CLI? (You can install it later)",
+            default=True
+        )
+
+        if not continue_setup:
+            console.print("\n[dim]Setup paused. Install GitHub CLI and run 'mint config setup' again.[/dim]")
+            config["tools"]["github_cli"] = {"installed": False, "authenticated": False}
+            save_config(config)
+            return
+
+        config["tools"]["github_cli"] = {"installed": False, "authenticated": False}
 
     # Tool Detection (Stata)
     console.print("\n[bold blue]Tool Detection[/bold blue]")

@@ -12,6 +12,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Change to project root directory
 cd "$PROJECT_ROOT"
 
+# Add current directory to Python path for module imports
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
 echo "🔍 Verifying transfer for {{ full_project_name }}"
 echo "Working directory: $PWD"
 echo
@@ -52,9 +55,8 @@ $PYTHON_CMD -c "import yaml, hashlib" 2>/dev/null || {
 }
 
 # Run verification (verify.py is in src/ directory)
-SRC_DIR="$PROJECT_ROOT/src"
 echo "Verifying transfer integrity..."
-if $PYTHON_CMD "$SRC_DIR/verify.py" "$UNPACK_DIR"; then
+if $PYTHON_CMD -m src.verify "$UNPACK_DIR"; then
     echo
     echo "✅ Transfer verification successful!"
 

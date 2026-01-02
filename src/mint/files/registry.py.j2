@@ -52,6 +52,18 @@ def get_registry_cache_path() -> Path:
     return REGISTRY_CACHE_DIR
 
 
+def convert_to_ssh_url(https_url: str) -> str:
+    """Convert HTTPS GitHub URL to SSH URL for authentication with SSH keys."""
+    if https_url.startswith('https://github.com/'):
+        # Extract org/repo from https://github.com/org/repo
+        path = https_url[len('https://github.com/'):]
+        # Remove .git suffix if present
+        if path.endswith('.git'):
+            path = path[:-4]
+        return f'git@github.com:{path}.git'
+    return https_url
+
+
 def clone_or_update_registry() -> Path:
     """Clone or update the registry cache."""
     registry_url = get_registry_url()
@@ -70,7 +82,8 @@ def clone_or_update_registry() -> Path:
         try:
             import git
             cache_path.parent.mkdir(parents=True, exist_ok=True)
-            git.Repo.clone_from(registry_url, cache_path)
+            ssh_url = convert_to_ssh_url(registry_url)
+            git.Repo.clone_from(ssh_url, cache_path)
         except Exception as e:
             raise RuntimeError(f"Failed to clone registry from {registry_url}: {e}")
 

@@ -12,6 +12,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Change to project root directory
 cd "$PROJECT_ROOT"
 
+# Add current directory to Python path for module imports
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
 echo "🔄 Pulling data for {{ full_project_name }}"
 echo "Working directory: $PWD"
 echo
@@ -36,17 +39,16 @@ $PYTHON_CMD -c "import yaml, git, dvc" 2>/dev/null || {
 }
 
 # Run the download script (located in src/ directory)
-SRC_DIR="$PROJECT_ROOT/src"
 echo "Starting data download..."
 if [ $# -eq 0 ]; then
     # No arguments - pull all
-    $PYTHON_CMD "$SRC_DIR/download.py" --all
+    $PYTHON_CMD -m src.download --all
 elif [ "$1" = "--all" ]; then
     # Explicit --all flag
-    $PYTHON_CMD "$SRC_DIR/download.py" --all
+    $PYTHON_CMD -m src.download --all
 else
     # Pull specific repo
-    $PYTHON_CMD "$SRC_DIR/download.py" "$@"
+    $PYTHON_CMD -m src.download "$@"
 fi
 
 echo

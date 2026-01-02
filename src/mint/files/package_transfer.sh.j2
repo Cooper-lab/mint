@@ -12,6 +12,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Change to project root directory
 cd "$PROJECT_ROOT"
 
+# Add current directory to Python path for module imports
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
 echo "📦 Packaging data for transfer to {{ full_project_name }}"
 echo "Working directory: $PWD"
 echo
@@ -55,9 +58,8 @@ if not downloaded:
 fi
 
 # Run the packaging script (located in src/ directory)
-SRC_DIR="$PROJECT_ROOT/src"
 echo "Creating transfer package..."
-$PYTHON_CMD "$SRC_DIR/package.py" "$@"
+$PYTHON_CMD -m src.package "$@"
 
 echo
 echo "✅ Transfer package created."

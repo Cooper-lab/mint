@@ -4,7 +4,7 @@ import platform
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 
 def get_platform() -> str:
@@ -98,6 +98,114 @@ def detect_stata_executable() -> Optional[str]:
                 return variant  # Return just the command name, not full path
     
     return None
+
+
+def detect_gh_cli() -> Optional[str]:
+    """Auto-detect GitHub CLI (gh) in PATH.
+
+    Returns:
+        Optional[str]: Path to gh executable if found, None otherwise
+    """
+    return shutil.which("gh")
+
+
+def check_gh_auth() -> Tuple[bool, Optional[str]]:
+    """Check if GitHub CLI is authenticated.
+
+    Returns:
+        Tuple of (is_authenticated, username_or_error_message)
+    """
+    import subprocess
+
+    gh_path = detect_gh_cli()
+    if not gh_path:
+        return False, "GitHub CLI (gh) is not installed"
+
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "status"],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode == 0:
+            # Parse username from output like "Logged in to github.com account username"
+            for line in result.stdout.split("\n") + result.stderr.split("\n"):
+                if "Logged in to" in line and "account" in line:
+                    # Extract username
+                    parts = line.split("account")
+                    if len(parts) > 1:
+                        username = parts[1].strip().split()[0].strip("()")
+                        return True, username
+            return True, "authenticated"
+        else:
+            return False, "Not authenticated"
+    except Exception as e:
+        return False, str(e)
+
+
+def get_gh_install_instructions() -> str:
+    """Get platform-specific GitHub CLI installation instructions.
+
+    Returns:
+        str: Installation instructions for the current platform
+    """
+    current_platform = get_platform()
+
+    if current_platform == "macos":
+        return """
+To install GitHub CLI on macOS:
+
+  Option 1 - Homebrew (recommended):
+    brew install gh
+
+  Option 2 - MacPorts:
+    sudo port install gh
+
+  Option 3 - Conda:
+    conda install gh --channel conda-forge
+
+After installation, authenticate with:
+    gh auth login
+"""
+    elif current_platform == "windows":
+        return """
+To install GitHub CLI on Windows:
+
+  Option 1 - winget (recommended):
+    winget install --id GitHub.cli
+
+  Option 2 - Scoop:
+    scoop install gh
+
+  Option 3 - Chocolatey:
+    choco install gh
+
+  Option 4 - Conda:
+    conda install gh --channel conda-forge
+
+After installation, authenticate with:
+    gh auth login
+"""
+    else:  # Linux
+        return """
+To install GitHub CLI on Linux:
+
+  Option 1 - Conda (recommended for research environments):
+    conda install gh --channel conda-forge
+
+  Option 2 - apt (Debian/Ubuntu):
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install gh
+
+  Option 3 - dnf (Fedora):
+    sudo dnf install gh
+
+After installation, authenticate with:
+    gh auth login
+"""
 
 
 def get_command_separator() -> str:

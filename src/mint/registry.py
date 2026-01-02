@@ -65,10 +65,22 @@ class LocalRegistry:
                 check=check
             )
             return result
+        except FileNotFoundError:
+            print("❌ GitHub CLI (gh) not found!")
+            print("\n💡 GitHub CLI is required for project registration.")
+            print("   Run 'mint config setup' for installation instructions.")
+            raise RuntimeError("GitHub CLI (gh) is not installed. Run 'mint config setup' for help.")
         except subprocess.CalledProcessError as e:
             print(f"❌ GitHub CLI command failed: {' '.join(cmd)}")
             print(f"stdout: {e.stdout}")
             print(f"stderr: {e.stderr}")
+
+            # Provide helpful guidance for common errors
+            if "gh auth login" in e.stderr or "GH_TOKEN" in e.stderr:
+                print("\n💡 [bold]GitHub CLI is not authenticated.[/bold]")
+                print("   Run: gh auth login")
+                print("   Or run: mint config setup")
+
             raise
 
     def _clone_registry(self) -> Path:
