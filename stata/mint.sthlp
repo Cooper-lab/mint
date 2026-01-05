@@ -35,20 +35,20 @@ research projects, and infrastructure packages with proper versioning and struct
 
 {pstd}
 The command supports three project types:
-{p2colset 9 18 20 2}
+{p2colset 9 18 20 2}{...}
 {p2col :{it:data}}Data product repositories ({cmd:data_}{it:name}){p_end}
 {p2col :{it:project}}Research project repositories ({cmd:prj__}{it:name}){p_end}
 {p2col :{it:infra}}Infrastructure package repositories ({cmd:infra_}{it:name}){p_end}
-{p2colreset}
+{p2colreset}{...}
 
 {pstd}
 Projects are created with:
-{p2colset 9 18 20 2}
+{p2colset 9 18 20 2}{...}
 {p2col :Git}Version control initialization{p_end}
 {p2col :DVC}Data version control setup{p_end}
 {p2col :Templates}Standardized directory structures{p_end}
 {p2col :Dependencies}Language-specific requirements files{p_end}
-{p2colreset}
+{p2colreset}{...}
 
 {marker options}{...}
 {title:Options}
