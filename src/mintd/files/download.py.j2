@@ -97,25 +97,55 @@ def clone_or_update_repo(repo_name: str, repo_url: str) -> Path:
 
 
 def get_dvc_hash(repo_dir: Path, stage: str) -> Tuple[str, str]:
-    """Get DVC hash and commit for a stage."""
-    repo = dvc.repo.Repo(repo_dir)
-
-    # Get the output files for this stage
-    pipeline = repo.get_pipeline()
-    stage_obj = pipeline.get_stage(stage, "")
-
-    if not stage_obj:
-        raise ValueError(f"Stage '{stage}' not found in pipeline")
-
-    # Get hash of stage outputs
+    """Get DVC hash and commit for a stage.
+    
+    This version reads .dvc files directly from the data directory
+    instead of using DVC pipeline API.
+    """
+    # Look for .dvc files in the data directory for this stage
+    data_stage_dir = repo_dir / "data" / stage
+    dvc_files = list(repo_dir.glob("**/*.dvc"))
+    
+    # Also check for data/<stage>.dvc pattern
+    stage_dvc = repo_dir / "data" / f"{stage}.dvc"
+    if stage_dvc.exists():
+        dvc_files = [stage_dvc]
+    elif data_stage_dir.exists():
+        dvc_files = list(data_stage_dir.glob("*.dvc"))
+    
+    if not dvc_files:
+        # Fall back to looking for any .dvc files
+        dvc_files = list(repo_dir.glob("data/**/*.dvc"))
+    
+    if not dvc_files:
+        # If still no .dvc files, use git commit as the hash
+        git_repo = git.Repo(repo_dir)
+        commit_hash = git_repo.head.commit.hexsha[:7]
+        return commit_hash, commit_hash
+    
+    # Collect hashes from .dvc files
     output_hashes = []
-    for output in stage_obj.outs:
-        if hasattr(output, 'checksum'):
-            output_hashes.append(output.checksum)
-
+    for dvc_file in dvc_files:
+        try:
+            with open(dvc_file, 'r') as f:
+                dvc_content = yaml.safe_load(f)
+            
+            # Extract md5 from outs section
+            outs = dvc_content.get('outs', [])
+            for out in outs:
+                if 'md5' in out:
+                    output_hashes.append(out['md5'])
+                elif 'hash' in out:
+                    output_hashes.append(out['hash'])
+        except Exception:
+            continue
+    
     if not output_hashes:
-        raise ValueError(f"No output checksums found for stage '{stage}'")
-
+        # Use git commit as fallback
+        git_repo = git.Repo(repo_dir)
+        commit_hash = git_repo.head.commit.hexsha[:7]
+        return commit_hash, commit_hash
+    
     # Combine hashes for deterministic stage hash
     combined = "".join(sorted(output_hashes))
     stage_hash = hashlib.sha256(combined.encode()).hexdigest()[:7]
@@ -128,12 +158,27 @@ def get_dvc_hash(repo_dir: Path, stage: str) -> Tuple[str, str]:
 
 
 def pull_dvc_data(repo_dir: Path, stage: str) -> None:
-    """Pull DVC data for a specific stage."""
-    cmd = ["dvc", "pull", f"{stage}.dvc"]
-    result = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        raise RuntimeError(f"DVC pull failed: {result.stderr}")
+    """Pull DVC data for a specific stage using DVC Python API.
+    
+    Uses native DVC Python API instead of subprocess for cross-platform compatibility.
+    """
+    from dvc.repo import Repo as DVCRepo
+    
+    try:
+        repo = DVCRepo(repo_dir)
+        
+        # Try to pull specific stage files first
+        stage_dvc = repo_dir / "data" / f"{stage}.dvc"
+        
+        if stage_dvc.exists():
+            # Pull specific target
+            repo.pull(targets=[str(stage_dvc)])
+        else:
+            # Pull all DVC tracked files
+            repo.pull()
+            
+    except Exception as e:
+        raise RuntimeError(f"DVC pull failed: {e}")
 
 
 def check_duplicate_version(repo_name: str, dvc_hash: str, manifest: Dict) -> bool:

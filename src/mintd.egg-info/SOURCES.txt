@@ -38,6 +38,7 @@ src/mintd/files/download.py.j2
 src/mintd/files/dvc_data.yaml.j2
 src/mintd/files/dvc_vars.yaml.j2
 src/mintd/files/dvcignore.txt
+src/mintd/files/enclave_cli.py.j2
 src/mintd/files/enclave_manifest.yaml.j2
 src/mintd/files/gitignore.txt
 src/mintd/files/ingest.R.j2
@@ -54,6 +55,7 @@ src/mintd/files/requirements_data.txt.j2
 src/mintd/files/requirements_enclave.txt.j2
 src/mintd/files/requirements_project.txt.j2
 src/mintd/files/schema.json.j2
+src/mintd/files/transfer.py.j2
 src/mintd/files/unpack_transfer.sh.j2
 src/mintd/files/validate.R.j2
 src/mintd/files/validate.do.j2

@@ -18,6 +18,7 @@ class EnclaveTemplate(BaseTemplate):
             "metadata.json": None,
             "enclave_manifest.yaml": None,
             "requirements.txt": None,
+            "enclave_cli.py": None,  # Cross-platform CLI entry point
             "data": {
                 ".gitkeep": None,
             },
@@ -25,8 +26,7 @@ class EnclaveTemplate(BaseTemplate):
                 "__init__.py": None,
                 "registry.py": None,
                 "download.py": None,
-                "package.py": None,
-                "verify.py": None,
+                "transfer.py": None,  # Combined package/verify/unpack
             },
             "scripts": {
                 "pull_data.sh": None,
@@ -50,13 +50,13 @@ class EnclaveTemplate(BaseTemplate):
             ("metadata.json", "metadata.json.j2"),
             ("enclave_manifest.yaml", "enclave_manifest.yaml.j2"),
             ("requirements.txt", "requirements_enclave.txt.j2"),
+            ("enclave_cli.py", "enclave_cli.py.j2"),  # Cross-platform CLI
             (".gitignore", "gitignore.txt"),
             (".dvcignore", "dvcignore.txt"),
             ("src/__init__.py", "__init__.py.j2"),
             ("src/registry.py", "registry.py.j2"),
             ("src/download.py", "download.py.j2"),
-            ("src/package.py", "package.py.j2"),
-            ("src/verify.py", "verify.py.j2"),
+            ("src/transfer.py", "transfer.py.j2"),  # Combined transfer operations
             ("scripts/pull_data.sh", "pull_data.sh.j2"),
             ("scripts/package_transfer.sh", "package_transfer.sh.j2"),
             ("scripts/unpack_transfer.sh", "unpack_transfer.sh.j2"),
