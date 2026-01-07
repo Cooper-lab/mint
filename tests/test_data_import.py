@@ -2,6 +2,7 @@
 
 import pytest
 import json
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
@@ -201,7 +202,7 @@ class TestProjectValidation:
             },
             "metadata": {},
             "ownership": {},
-            "access_control": {"teams": []},
+            "access_control": {"teams": [{"name": "test", "permission": "admin"}]},
             "status": {}
         }
 
