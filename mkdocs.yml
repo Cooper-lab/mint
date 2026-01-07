@@ -1,0 +1,59 @@
+site_name: Mint
+site_description: Lab project scaffolding tool
+site_url: https://cooper-lab.github.io/mint/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: lime
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Quick Start: quick-start.md
+  - Project Types: project-types.md
+  - Features:
+    - Registry Integration: features/registry.md
+    - Custom Templates: templates.md
+    - Stata Integration: features/stata.md
+    - Mint Utilities: features/utilities.md
+    - Storage Setup: features/storage.md
+  - Reference:
+    - CLI Reference: cli.md
+    - Python API: api.md
+    - Configuration: configuration.md
+  - Development: development.md

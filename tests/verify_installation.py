@@ -38,7 +38,7 @@ def verify_installation():
     # Check mint import (try local source first for development)
     import sys
     import os
-    local_src = os.path.join(os.path.dirname(__file__), 'src')
+    local_src = os.path.join(os.path.dirname(__file__), '..', 'src')
     if local_src not in sys.path:
         sys.path.insert(0, local_src)
 

@@ -260,7 +260,7 @@ def format_project_name(project_type: str, name: str) -> str:
     if project_type == "data":
         return f"data_{name}"
     elif project_type == "project":
-        return f"prj__{name}"
+        return f"prj_{name}"
     elif project_type == "infra":
         return f"infra_{name}"
     else:

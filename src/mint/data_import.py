@@ -394,6 +394,14 @@ def import_data_product(
         console.print(f"   DVC file: {dvc_file}")
         console.print(f"   Local path: {dest}")
 
+        # Update project metadata
+        try:
+            update_project_metadata(project_path, result, product_info)
+            console.print("📝 Updated project metadata dependencies")
+        except MetadataUpdateError as e:
+            console.print(f"⚠️  Failed to update metadata: {e}", style="yellow")
+            # We don't fail the import for metadata update failure, but we log it
+
         return result
 
     except Exception as e:

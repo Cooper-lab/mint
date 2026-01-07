@@ -39,10 +39,10 @@ def test_create_project_project():
         )
 
         assert result.name == "test_api"
-        assert result.full_name == "prj__test_api"
+        assert result.full_name == "prj_test_api"
         assert result.project_type == "project"
         assert result.path.exists()
-        assert (result.path / "src" / "r" / "analysis.R").exists()
+        assert (result.path / "code" / "analysis" / "__init__.py").exists()
 
 
 def test_create_project_infra():
@@ -61,7 +61,7 @@ def test_create_project_infra():
         assert result.full_name == "infra_test_api"
         assert result.project_type == "infra"
         assert result.path.exists()
-        assert (result.path / "src" / "test_api" / "__init__.py").exists()
+        assert (result.path / "code" / "test_api" / "__init__.py").exists()
 
 
 def test_create_project_invalid_type():

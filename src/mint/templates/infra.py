@@ -37,6 +37,7 @@ class InfraTemplate(BaseTemplate):
             ("README.md", "README_infra.md.j2"),
             ("metadata.json", "metadata.json.j2"),
             (".gitignore", "gitignore.txt"),
+            ("pyproject.toml", "pyproject_infra.toml.j2"),
         ]
 
     def get_directory_structure(self, use_current_repo: bool = False) -> Dict[str, Any]:

@@ -194,7 +194,11 @@ class TestProjectValidation:
         """Test validation fails for invalid project type."""
         # Create metadata with invalid type
         metadata = {
-            "project": {"type": "invalid"},
+            "project": {
+                "name": "test_project",
+                "type": "invalid",
+                "full_name": "prj_test_project"
+            },
             "metadata": {},
             "ownership": {},
             "access_control": {"teams": []},
@@ -232,7 +236,7 @@ class TestDVCImport:
     @patch('subprocess.run')
     def test_run_dvc_import_failure(self, mock_run, temp_dir):
         """Test DVC import failure."""
-        mock_run.return_value = Mock(returncode=1, stderr="Import failed")
+        mock_run.side_effect = subprocess.CalledProcessError(1, ["dvc", "import"], stderr="Import failed")
 
         with pytest.raises(DVCImportError, match="DVC import failed"):
             run_dvc_import(
@@ -538,4 +542,4 @@ class TestErrorHandling:
 
         summary = transaction.get_summary()
         assert summary["successful"] == 1
-        assert summary["failed"] == 1
+        assert len(summary["failed"]) == 1

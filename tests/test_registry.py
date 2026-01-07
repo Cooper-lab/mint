@@ -166,10 +166,25 @@ class TestLocalRegistryIntegration:
             "project": {
                 "name": "test_project",
                 "type": "data",
-                "full_name": "data_test_project"
+                "full_name": "data_test_project",
+                "status": "active"
+            },
+            "metadata": {
+                "version": "1.0.0",
+                "mint_version": "0.1.0"
             },
             "ownership": {
                 "created_by": "user@example.com"
+            },
+            "header": {},
+            "access_control": {
+                "teams": [{"name": "admins", "permission": "admin"}]
+            },
+            "status": {
+                "state": "active"
+            },
+            "repository": {
+                "github_url": "https://github.com/test-org/data_test_project"
             }
         }
 
@@ -275,8 +290,14 @@ class TestCatalogEntryGeneration:
             "ownership": {
                 "created_by": "user@example.com"
             },
-            "description": "Test data project",
-            "tags": ["test"]
+            "metadata": {
+                "description": "Test data project",
+                "tags": ["test"]
+            },
+            "status": {
+                "state": "active"
+            },
+            "schema_version": "1.0"
         }
 
         entry, project_name = registry._generate_catalog_entry(metadata)
@@ -287,7 +308,7 @@ class TestCatalogEntryGeneration:
         assert entry["project"]["full_name"] == "data_test_data"
         assert entry["metadata"]["description"] == "Test data project"
         assert "test" in entry["metadata"]["tags"]
-        assert entry["ownership"]["created_by"] == "testuser@test-org.github.io"
+        assert entry["ownership"]["created_by"] == "user@example.com"
         assert "storage" in entry  # Data projects should have storage
         assert entry["storage"]["dvc"]["bucket"] == "lab-data"
 
@@ -299,16 +320,23 @@ class TestCatalogEntryGeneration:
             "project": {
                 "name": "analysis_1",
                 "type": "project",
-                "full_name": "prj__analysis_1"
+                "full_name": "prj_analysis_1",
+                "status": "active"
             },
             "ownership": {
                 "created_by": "user@example.com"
+            },
+            "status": {
+                "state": "active"
+            },
+            "metadata": {
+                "version": "1.0.0"
             }
         }
 
         entry, project_name = registry._generate_catalog_entry(metadata)
 
-        assert entry["project"]["full_name"] == "prj__analysis_1"
+        assert entry["project"]["full_name"] == "prj_analysis_1"
         assert "storage" in entry  # Project types should have storage
         assert entry["storage"]["dvc"]["bucket"] == "lab-projects"
         assert "data_dependencies" in entry["metadata"]
@@ -342,15 +370,26 @@ class TestProjectMetadata:
         """Test successful metadata loading."""
         metadata = {
             "schema_version": "1.0",
+            "methodology": "Test methodology",
             "project": {
                 "name": "test_project",
                 "type": "data",
                 "full_name": "data_test_project"
             },
+            "metadata": {
+                "version": "1.0.0",
+                "mint_version": "0.1.0"
+            },
             "ownership": {
                 "created_by": "user@example.com",
                 "created_at": "2025-01-15T10:30:00Z",
                 "maintainers": []
+            },
+            "access_control": {
+                "teams": [{"name": "admins", "permission": "admin"}]
+            },
+            "status": {
+                "state": "active"
             }
         }
 

@@ -14,7 +14,6 @@ src/mint/config.py
 src/mint/data_import.py
 src/mint/manifest.py
 src/mint/registry.py
-src/mint/utils.py
 src/mint.egg-info/PKG-INFO
 src/mint.egg-info/SOURCES.txt
 src/mint.egg-info/dependency_links.txt
@@ -69,7 +68,10 @@ src/mint/templates/base.py
 src/mint/templates/data.py
 src/mint/templates/enclave.py
 src/mint/templates/infra.py
+src/mint/templates/languages.py
 src/mint/templates/project.py
+src/mint/utils/__init__.py
+src/mint/utils/loader.py
 stata/README.md
 stata/mint.ado
 stata/mint.pkg
