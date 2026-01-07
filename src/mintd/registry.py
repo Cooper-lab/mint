@@ -403,10 +403,32 @@ After merging this PR:
 
 def get_registry_client() -> LocalRegistry:
     """Create a registry client using the configured registry URL."""
-    from .config import get_registry_url
-
-    registry_url = get_registry_url()
+    from .config import get_config
+    config = get_config()
+    registry_url = config.get("registry", {}).get("url", "")
     return LocalRegistry(registry_url)
+
+
+def query_registry_for_product(product_name: str) -> Dict[str, Any]:
+    """Helper to query registry for a data product.
+
+    Args:
+        product_name: Name of the data product (e.g., "data_cms-provider-data-service")
+
+    Returns:
+        Dictionary with existence and catalog data
+    """
+    try:
+        client = get_registry_client()
+        catalog_data = client.query_data_product(product_name)
+        return {
+            "exists": True,
+            "catalog_data": catalog_data
+        }
+    except FileNotFoundError:
+        return {"exists": False}
+    except Exception as e:
+        return {"exists": False, "error": str(e)}
 
 
 def load_project_metadata(project_path: Path) -> Dict[str, Any]:

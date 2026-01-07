@@ -12,6 +12,7 @@ src/mintd/api.py
 src/mintd/cli.py
 src/mintd/config.py
 src/mintd/data_import.py
+src/mintd/enclave_commands.py
 src/mintd/manifest.py
 src/mintd/registry.py
 src/mintd.egg-info/PKG-INFO

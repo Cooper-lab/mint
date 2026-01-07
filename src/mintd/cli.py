@@ -1020,22 +1020,12 @@ def add(repo_name, path, no_pull):
 
     # Pull the data unless --no-pull is specified
     if not no_pull:
-        console.print(f"📥 Pulling data for '{repo_name}'...")
-        script_path = enclave_path / "scripts" / "pull_data.sh"
-
-        if not script_path.exists():
-            console.print(f"❌ Pull script not found: {script_path}", style="red")
-            console.print("Data will need to be pulled manually later.")
-            return
-
-        # Run the pull script for this specific repo
+        from .enclave_commands import pull_enclave_data
         try:
-            result = subprocess.run([str(script_path), repo_name],
-                                  cwd=enclave_path, check=True,
-                                  capture_output=True, text=True)
+            pull_enclave_data(enclave_path, repo_name=repo_name)
             console.print("✅ Data pull completed successfully.")
-        except subprocess.CalledProcessError as e:
-            console.print(f"❌ Data pull failed: {e.stderr}", style="red")
+        except Exception as e:
+            console.print(f"❌ Data pull failed: {e}", style="red")
             console.print("You can try pulling manually later with:")
             console.print(f"  ./scripts/pull_data.sh {repo_name}")
     else:
@@ -1049,29 +1039,14 @@ def add(repo_name, path, no_pull):
               help="Path to enclave directory (defaults to current directory)")
 def pull(repo_name, pull_all, path):
     """Pull data products from registry (networked machine only)."""
-    from pathlib import Path
-    import subprocess
+    from .enclave_commands import pull_enclave_data
 
     enclave_path = Path(path) if path else Path.cwd()
-    script_path = enclave_path / "scripts" / "pull_data.sh"
-
-    if not script_path.exists():
-        console.print(f"❌ Pull script not found: {script_path}", style="red")
-        console.print("Make sure you're in an enclave project directory.")
-        raise click.Abort()
-
-    # Build command arguments
-    cmd = [str(script_path)]
-    if pull_all:
-        cmd.append("--all")
-    elif repo_name:
-        cmd.append(repo_name)
-
-    # Run the pull script
+    
     try:
-        result = subprocess.run(cmd, cwd=enclave_path, check=True)
-    except subprocess.CalledProcessError as e:
-        console.print(f"❌ Pull failed with exit code {e.returncode}", style="red")
+        pull_enclave_data(enclave_path, repo_name=repo_name, pull_all=pull_all)
+    except Exception as e:
+        console.print(f"❌ Pull failed: {e}", style="red")
         raise click.Abort()
 
 
@@ -1081,27 +1056,27 @@ def pull(repo_name, pull_all, path):
               help="Path to enclave directory (defaults to current directory)")
 def package(name, path):
     """Package downloaded data for transfer to enclave."""
-    from pathlib import Path
-    import subprocess
+    from .enclave_commands import package_transfer
 
     enclave_path = Path(path) if path else Path.cwd()
-    script_path = enclave_path / "scripts" / "package_transfer.sh"
-
-    if not script_path.exists():
-        console.print(f"❌ Package script not found: {script_path}", style="red")
-        console.print("Make sure you're in an enclave project directory.")
+    
+    try:
+        package_transfer(enclave_path, name=name)
+    except Exception as e:
+        console.print(f"❌ Packaging failed: {e}", style="red")
         raise click.Abort()
 
-    # Build command arguments
-    cmd = [str(script_path)]
-    if name:
-        cmd.extend(["--name", name])
 
-    # Run the package script
+@enclave.command()
+@click.argument("transfer_file", type=click.Path(exists=True, path_type=Path))
+@click.option("--dest", "-d", type=click.Path(path_type=Path), help="Destination directory")
+def unpack(transfer_file, dest):
+    """Unpack a transfer archive."""
+    from .enclave_commands import unpack_transfer
     try:
-        result = subprocess.run(cmd, cwd=enclave_path, check=True)
-    except subprocess.CalledProcessError as e:
-        console.print(f"❌ Packaging failed with exit code {e.returncode}", style="red")
+        unpack_transfer(transfer_file, dest_dir=dest)
+    except Exception as e:
+        console.print(f"❌ Unpack failed: {e}", style="red")
         raise click.Abort()
 
 
@@ -1109,25 +1084,15 @@ def package(name, path):
 @click.argument("transfer_dir", type=click.Path(exists=True, path_type=Path))
 @click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
               help="Path to enclave directory (defaults to current directory)")
-def verify(transfer_dir, path):
-    """Verify transfer integrity on enclave."""
-    from pathlib import Path
-    import subprocess
-
-    enclave_path = Path(path) if path else Path.cwd()
-    script_path = enclave_path / "scripts" / "verify_transfer.sh"
-
-    if not script_path.exists():
-        console.print(f"❌ Verify script not found: {script_path}", style="red")
-        console.print("Make sure you're in an enclave project directory.")
-        raise click.Abort()
-
-    # Run the verify script
+def verify(transfer_dir):
+    """Verify an unpacked transfer's integrity and move data to enclave."""
+    from .enclave_commands import verify_transfer
     try:
-        result = subprocess.run([str(script_path), str(transfer_dir)],
-                              cwd=enclave_path, check=True)
-    except subprocess.CalledProcessError as e:
-        console.print(f"❌ Verification failed with exit code {e.returncode}", style="red")
+        success = verify_transfer(transfer_dir)
+        if not success:
+            raise click.Abort()
+    except Exception as e:
+        console.print(f"❌ Verification failed: {e}", style="red")
         raise click.Abort()
 
 
@@ -1175,6 +1140,23 @@ def list(repo_name, path):
             version = item['dvc_hash'][:7]
             date = item.get('transfer_date', 'unknown')
             console.print(f"  • {repo}: {version} ({date})")
+
+
+@enclave.command()
+@click.option("--keep", "-k", default=1, type=int, help="Number of recent versions to keep (default: 1)")
+@click.option("--staging-only", is_flag=True, help="Only clean the staging area, keep all downloads")
+@click.option("--path", "-p", type=click.Path(exists=True, path_type=Path),
+              help="Path to enclave directory (defaults to current directory)")
+def clean(keep, staging_only, path):
+    """Prune old data versions and clean staging area."""
+    from .enclave_commands import clean_enclave
+    enclave_path = Path(path) if path else Path.cwd()
+    
+    try:
+        clean_enclave(enclave_path, keep_recent=keep, staging_only=staging_only)
+    except Exception as e:
+        console.print(f"❌ Cleanup failed: {e}", style="red")
+        raise click.Abort()
 
 
 @main.group()
