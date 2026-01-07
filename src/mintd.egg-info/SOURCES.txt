@@ -73,11 +73,11 @@ src/mintd/templates/project.py
 src/mintd/utils/__init__.py
 src/mintd/utils/loader.py
 stata/README.md
-stata/mint.ado
-stata/mint.pkg
-stata/mint.sthlp
-stata/mint_installer.ado
-stata/mint_installer.sthlp
+stata/mintd.ado
+stata/mintd.pkg
+stata/mintd.sthlp
+stata/mintd_installer.ado
+stata/mintd_installer.sthlp
 tests/test_api.py
 tests/test_cli.py
 tests/test_config.py
