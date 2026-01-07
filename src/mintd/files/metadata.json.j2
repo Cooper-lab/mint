@@ -27,7 +27,11 @@
     "bucket": "{{ bucket_name | default('') }}",
     "prefix": "{{ storage_prefix }}",
     "endpoint": "{{ storage_endpoint | default('') }}",
-    "versioning": {{ storage_versioning | default(true) | lower }}
+    "versioning": {{ storage_versioning | default(true) | lower }},
+    "dvc": {
+      "remote_name": "{{ dvc_remote_name | default('') }}",
+      "remote_url": "{{ dvc_remote_url | default('') }}"
+    }
   },
   "schema": {
     "version": "1.0.0",

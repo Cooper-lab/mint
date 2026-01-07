@@ -58,10 +58,12 @@ def get_repo_info(repo_name: str) -> Dict:
     # Extract repository and storage information
     repository = catalog_data.get('repository', {})
     storage = catalog_data.get('storage', {})
+    dvc_config = storage.get('dvc', {})
 
     return {
         'repo_url': repository.get('github_url', ''),
-        'dvc_remote': storage.get('dvc', {}).get('remote_name', ''),
+        'dvc_remote_name': dvc_config.get('remote_name', ''),
+        'dvc_remote_url': dvc_config.get('remote_url', ''),
         'data_stage': 'final',  # Default to final stage
     }
 
@@ -157,12 +159,101 @@ def get_dvc_hash(repo_dir: Path, stage: str) -> Tuple[str, str]:
     return stage_hash, commit_hash
 
 
-def pull_dvc_data(repo_dir: Path, stage: str) -> None:
+def configure_dvc_remote(repo_dir: Path, repo_name: str, dvc_remote_url: str = "") -> None:
+    """Configure DVC remote in cloned repo.
+    
+    Uses explicit URL from registry if provided, otherwise falls back to 
+    searching global DVC configuration.
+    
+    Args:
+        repo_dir: Path to the cloned repository
+        repo_name: Full repository name (e.g., data_cms-provider-data-service)
+        dvc_remote_url: Explicit DVC remote URL from registry (preferred)
+    """
+    import subprocess
+    
+    # First, check what remote name the repo expects
+    repo_config = repo_dir / ".dvc" / "config"
+    expected_remote = "storage"  # Default
+    
+    if repo_config.exists():
+        with open(repo_config, 'r') as f:
+            for line in f:
+                if "remote =" in line:
+                    expected_remote = line.split("=")[1].strip()
+                    break
+    
+    # If we have an explicit URL from registry, use it directly
+    if dvc_remote_url:
+        try:
+            subprocess.run(
+                ["dvc", "remote", "add", "-f", expected_remote, dvc_remote_url],
+                capture_output=True, text=True, cwd=repo_dir
+            )
+            print(f"  Configured DVC remote '{expected_remote}' -> {dvc_remote_url}")
+            return
+        except Exception as e:
+            print(f"  Warning: Could not configure DVC remote from registry URL: {e}")
+    
+    # Fallback: search global DVC config for a matching remote
+    project_name = repo_name.replace("data_", "").replace("prj_", "").replace("infra_", "")
+    
+    try:
+        result = subprocess.run(
+            ["dvc", "remote", "list", "--global"],
+            capture_output=True, text=True, cwd=repo_dir
+        )
+        
+        if result.returncode == 0:
+            global_remotes = {}
+            for line in result.stdout.strip().split("\n"):
+                if line.strip():
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        global_remotes[parts[0]] = parts[1]
+            
+            # Try to find a matching remote
+            matching_url = None
+            
+            # First try full repo name match (e.g., data_cms-provider-data-service)
+            if repo_name in global_remotes:
+                matching_url = global_remotes[repo_name]
+            # Then try project name without prefix
+            elif project_name in global_remotes:
+                matching_url = global_remotes[project_name]
+            # Then check if any remote URL contains the project name
+            else:
+                for name, url in global_remotes.items():
+                    if project_name in url:
+                        matching_url = url
+                        break
+            
+            if matching_url:
+                subprocess.run(
+                    ["dvc", "remote", "add", "-f", expected_remote, matching_url],
+                    capture_output=True, text=True, cwd=repo_dir
+                )
+                print(f"  Configured DVC remote '{expected_remote}' -> {matching_url}")
+                
+    except Exception as e:
+        print(f"  Warning: Could not configure DVC remote: {e}")
+
+
+def pull_dvc_data(repo_dir: Path, repo_name: str, stage: str, dvc_remote_url: str = "") -> None:
     """Pull DVC data for a specific stage using DVC Python API.
     
     Uses native DVC Python API instead of subprocess for cross-platform compatibility.
+    
+    Args:
+        repo_dir: Path to the cloned repository
+        repo_name: Full repository name
+        stage: Data stage to pull (e.g., 'final')
+        dvc_remote_url: Explicit DVC remote URL from registry
     """
     from dvc.repo import Repo as DVCRepo
+    
+    # Configure DVC remote before pulling
+    configure_dvc_remote(repo_dir, repo_name, dvc_remote_url)
     
     try:
         repo = DVCRepo(repo_dir)
@@ -246,8 +337,8 @@ def pull_single_repo(repo_name: str, verbose: bool = True) -> None:
             print(f"  No new data to pull.")
             return
 
-        # Pull DVC data
-        pull_dvc_data(repo_dir, data_stage)
+        # Pull DVC data (using registry URL if available)
+        pull_dvc_data(repo_dir, repo_name, data_stage, repo_info.get('dvc_remote_url', ''))
 
         # Update manifest
         add_to_downloaded(repo_name, dvc_hash, git_commit, manifest)
@@ -320,8 +411,8 @@ def pull_all_repos(verbose: bool = True) -> None:
                 print(f"    Latest:  {dvc_hash[:7]}")
                 print("    → Pulling new version...")
 
-            # Pull DVC data
-            pull_dvc_data(repo_dir, data_stage)
+            # Pull DVC data (using registry URL if available)
+            pull_dvc_data(repo_dir, repo_name, data_stage, repo_info.get('dvc_remote_url', ''))
 
             # Update manifest
             add_to_downloaded(repo_name, dvc_hash, git_commit, manifest)

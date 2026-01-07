@@ -30,7 +30,7 @@ def _is_command_available(command: str) -> bool:
     return shutil.which(command) is not None
 
 
-def init_dvc(project_path: Path, bucket_prefix: str, sensitivity: str = "restricted", project_name: str = "") -> None:
+def init_dvc(project_path: Path, bucket_prefix: str, sensitivity: str = "restricted", project_name: str = "", full_project_name: str = "") -> dict:
     """Initialize DVC and configure S3 remote.
 
     Args:
@@ -38,26 +38,34 @@ def init_dvc(project_path: Path, bucket_prefix: str, sensitivity: str = "restric
         bucket_prefix: Name of the S3 bucket prefix to use as remote
         sensitivity: Data sensitivity level ("public", "restricted", "confidential")
         project_name: Name of the project (used in path construction)
+        full_project_name: Full project name with prefix (e.g., data_cms-provider-data-service)
 
+    Returns:
+        Dict with remote_name and remote_url for storing in metadata
+        
     Raises:
         RuntimeError: If DVC operations fail
     """
     config = get_config()
     storage = config["storage"]
+    
+    # Use full_project_name (with prefix) as the remote name for consistency
+    remote_name = full_project_name if full_project_name else (project_name if project_name else "storage")
+    
+    # Compute ACL path and remote URL
+    acl_path = SENSITIVITY_TO_ACL.get(sensitivity, "lab")
+    if project_name:
+        remote_url = f"s3://{bucket_prefix}/{acl_path}/{project_name}/"
+    else:
+        remote_url = f"s3://{bucket_prefix}/{acl_path}/"
+    
+    # Default return value in case DVC init fails
+    dvc_info = {"remote_name": remote_name, "remote_url": remote_url}
 
     try:
         # Initialize DVC
         _run_dvc_command(project_path, ["init"])
 
-        # Add remote with ACL-based path prefix
-        # Use project_name as the remote name for clarity
-        acl_path = SENSITIVITY_TO_ACL.get(sensitivity, "lab")  # Default to "lab" if invalid sensitivity
-        remote_name = project_name if project_name else "storage"
-        if project_name:
-            remote_url = f"s3://{bucket_prefix}/{acl_path}/{project_name}/"
-        else:
-            remote_url = f"s3://{bucket_prefix}/{acl_path}/"
-        
         # Add as global remote so it's available across all projects
         _run_dvc_command(project_path, ["remote", "add", "--global", "-d", remote_name, remote_url])
 
@@ -83,6 +91,8 @@ def init_dvc(project_path: Path, bucket_prefix: str, sensitivity: str = "restric
         # This allows the project creation to succeed even without DVC
         print(f"Warning: Failed to initialize DVC: {e}")
         print("The project was created successfully, but DVC initialization was skipped.")
+    
+    return dvc_info
 
 
 def create_dvcignore(project_path: Path, project_type: str) -> None:

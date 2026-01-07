@@ -174,10 +174,16 @@ def create_project(
     if init_git:
         _init_git(project_path, use_current_repo)
 
-    # Initialize DVC if requested
+    # Initialize DVC if requested and capture remote info for metadata
+    dvc_info = {"remote_name": "", "remote_url": ""}
     if init_dvc:
         sensitivity = context.get("storage_sensitivity", "restricted")
-        _init_dvc(project_path, bucket_name, sensitivity)
+        full_project_name = template.prefix + name
+        dvc_info = _init_dvc(project_path, bucket_name, sensitivity, name, full_project_name)
+    
+    # Update metadata.json with DVC remote info if DVC was initialized
+    if dvc_info.get("remote_url"):
+        _update_metadata_with_dvc_info(project_path, dvc_info)
 
     # Register project with Data Commons Registry if requested
     registration_url = None
@@ -217,8 +223,14 @@ def _init_git(project_path: Path, use_current_repo: bool = False) -> None:
             init_git(project_path)
 
 
-def _init_dvc(project_path: Path, bucket_prefix: Optional[str] = None, sensitivity: str = "restricted") -> None:
-    """Initialize DVC repository with S3 remote."""
+def _init_dvc(project_path: Path, bucket_prefix: Optional[str] = None, sensitivity: str = "restricted", project_name: str = "", full_project_name: str = "") -> dict:
+    """Initialize DVC repository with S3 remote.
+    
+    Returns:
+        Dict with remote_name and remote_url for storage in metadata
+    """
+    empty_result = {"remote_name": "", "remote_url": ""}
+    
     if not is_dvc_repo(project_path):
         # Get bucket prefix from config if not provided
         if bucket_prefix is None:
@@ -228,23 +240,61 @@ def _init_dvc(project_path: Path, bucket_prefix: Optional[str] = None, sensitivi
             if not bucket_prefix:
                 print("Warning: Bucket prefix not configured. Run 'mint config setup' to configure storage.")
                 print("The project was created successfully, but DVC initialization was skipped.")
-                return
+                return empty_result
 
-        # Extract project name from path
-        project_name = project_path.name
-        # Extract the actual project name (remove prefix)
-        if project_name.startswith(("data_", "prj__", "infra_")):
-            # Find the first underscore and take everything after it
-            parts = project_name.split("_", 1)
-            if len(parts) > 1:
-                project_name = parts[1]
+        # Use provided project_name or extract from path
+        if not project_name:
+            project_name = project_path.name
+            # Extract the actual project name (remove prefix)
+            if project_name.startswith(("data_", "prj__", "infra_")):
+                parts = project_name.split("_", 1)
+                if len(parts) > 1:
+                    project_name = parts[1]
 
         try:
-            init_dvc(project_path, bucket_prefix, sensitivity, project_name)
+            return init_dvc(project_path, bucket_prefix, sensitivity, project_name, full_project_name)
         except Exception as e:
             # Log warning but don't fail the project creation
             print(f"Warning: Failed to initialize DVC: {e}")
             print("The project was created successfully, but DVC initialization was skipped.")
+            return empty_result
+    
+    return empty_result
+
+
+def _update_metadata_with_dvc_info(project_path: Path, dvc_info: dict) -> None:
+    """Update metadata.json with DVC remote information.
+    
+    Args:
+        project_path: Path to the project directory
+        dvc_info: Dict with remote_name and remote_url
+    """
+    import json
+    
+    metadata_path = project_path / "metadata.json"
+    if not metadata_path.exists():
+        return
+    
+    try:
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        
+        # Ensure storage section exists
+        if "storage" not in metadata:
+            metadata["storage"] = {}
+        
+        # Add/update DVC info
+        metadata["storage"]["dvc"] = {
+            "remote_name": dvc_info.get("remote_name", ""),
+            "remote_url": dvc_info.get("remote_url", "")
+        }
+        
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+            f.write("\n")  # Trailing newline
+            
+    except Exception as e:
+        print(f"Warning: Could not update metadata.json with DVC info: {e}")
 
 
 def _register_project(project_path: Path) -> Optional[str]:
