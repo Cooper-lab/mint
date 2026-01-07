@@ -54,9 +54,9 @@ $PYTHON_CMD -c "import yaml, hashlib" 2>/dev/null || {
     exit 1
 }
 
-# Run verification (verify.py is in src/ directory)
+# Run verification (transfer logic is in src/transfer.py)
 echo "Verifying transfer integrity..."
-if $PYTHON_CMD -m src.verify "$UNPACK_DIR"; then
+if $PYTHON_CMD -m src.transfer verify "$UNPACK_DIR"; then
     echo
     echo "✅ Transfer verification successful!"
 

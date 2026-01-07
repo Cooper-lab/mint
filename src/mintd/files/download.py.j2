@@ -82,7 +82,8 @@ def convert_to_ssh_url(https_url: str) -> str:
 
 def clone_or_update_repo(repo_name: str, repo_url: str) -> Path:
     """Clone or update a data repository."""
-    repo_dir = DATA_DIR / f".{repo_name}_staging"
+    repo_dir = DATA_DIR / "staging" / repo_name
+    repo_dir.parent.mkdir(parents=True, exist_ok=True)
 
     # Convert HTTPS URL to SSH URL for authentication
     ssh_url = convert_to_ssh_url(repo_url)
@@ -90,12 +91,43 @@ def clone_or_update_repo(repo_name: str, repo_url: str) -> Path:
     if repo_dir.exists():
         # Update existing repo
         repo = git.Repo(repo_dir)
+        # Ensure clean state to avoid pull conflicts with modified DVC configs
+        repo.git.reset('--hard')
         repo.remotes.origin.pull()
     else:
         # Clone new repo
         repo = git.Repo.clone_from(ssh_url, repo_dir)
 
     return repo_dir
+
+
+def copy_to_downloads(repo_name: str, version: str, staging_dir: Path, stage: str) -> Path:
+    """Copy staged data to versioned downloads directory."""
+    downloads_dir = DATA_DIR / "downloads" / repo_name / version
+    downloads_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Source is mapping to data/<stage> or data/<stage>.dvc handled files
+    # For now, let's copy the specific stage directory if it exists
+    src_data_dir = staging_dir / "data" / stage
+    
+    if src_data_dir.exists():
+        dest_data_dir = downloads_dir / stage
+        if dest_data_dir.exists():
+            shutil.rmtree(dest_data_dir)
+        shutil.copytree(src_data_dir, dest_data_dir)
+        return downloads_dir
+    
+    # Otherwise, if no specific stage dir, we might have files in data/
+    # that were pulled. DVC pull puts them where they are tracked.
+    # Let's just copy the whole data/ directory from staging to downloads
+    src_all_data = staging_dir / "data"
+    if src_all_data.exists():
+        dest_all_data = downloads_dir / "data"
+        if dest_all_data.exists():
+            shutil.rmtree(dest_all_data)
+        shutil.copytree(src_all_data, dest_all_data)
+        
+    return downloads_dir
 
 
 def get_dvc_hash(repo_dir: Path, stage: str) -> Tuple[str, str]:
@@ -373,8 +405,17 @@ def pull_single_repo(repo_name: str, verbose: bool = True) -> None:
         # Pull DVC data (using registry URL if available)
         pull_dvc_data(repo_dir, repo_name, data_stage, repo_info.get('dvc_remote_url', ''))
 
+        # Copy to versioned downloads directory
+        version_str = f"{dvc_hash[:7]}-{git_commit[:7]}"
+        downloads_dir = copy_to_downloads(repo_name, version_str, repo_dir, data_stage)
+
         # Update manifest
         add_to_downloaded(repo_name, dvc_hash, git_commit, manifest)
+        # Store local path in manifest
+        for item in manifest['downloaded']:
+            if item['repo'] == repo_name and item['dvc_hash'] == dvc_hash:
+                item['local_path'] = str(downloads_dir.relative_to(PROJECT_ROOT))
+        
         save_manifest(manifest)
 
         if verbose:
@@ -447,8 +488,17 @@ def pull_all_repos(verbose: bool = True) -> None:
             # Pull DVC data (using registry URL if available)
             pull_dvc_data(repo_dir, repo_name, data_stage, repo_info.get('dvc_remote_url', ''))
 
+            # Copy to versioned downloads directory
+            version_str = f"{dvc_hash[:7]}-{git_commit[:7]}"
+            downloads_dir = copy_to_downloads(repo_name, version_str, repo_dir, data_stage)
+
             # Update manifest
             add_to_downloaded(repo_name, dvc_hash, git_commit, manifest)
+            # Store local path in manifest
+            for item in manifest['downloaded']:
+                if item['repo'] == repo_name and item['dvc_hash'] == dvc_hash:
+                    item['local_path'] = str(downloads_dir.relative_to(PROJECT_ROOT))
+            
             updated += 1
 
         except Exception as e:

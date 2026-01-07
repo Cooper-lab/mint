@@ -97,15 +97,36 @@ def get_downloaded_data() -> Dict[str, Path]:
     source_data = {}
     for entry in downloaded:
         repo_name = entry['repo']
-        staging_dir = DATA_DIR / f".{repo_name}_staging" / "final"
         
+        # Priority 1: Use local_path if stored in manifest
+        local_path_str = entry.get('local_path')
+        if local_path_str:
+            local_path = Path(__file__).parent.parent / local_path_str
+            if local_path.exists():
+                source_data[repo_name] = local_path
+                continue
+
+        # Priority 2: Look in downloads directory with version
+        version_str = f"{entry['dvc_hash'][:7]}-{entry['git_commit'][:7]}"
+        versioned_dir = DATA_DIR / "downloads" / repo_name / version_str
+        if versioned_dir.exists():
+            source_data[repo_name] = versioned_dir
+            continue
+
+        # Priority 3: Fallback to staging (for backward compatibility)
+        staging_dir = DATA_DIR / "staging" / repo_name
+        if not staging_dir.exists():
+            staging_dir = DATA_DIR / f".{repo_name}_staging"
+            
         if staging_dir.exists():
-            source_data[repo_name] = staging_dir
-        else:
-            # Try data/final as alternative
-            alt_dir = DATA_DIR / f".{repo_name}_staging" / "data" / "final"
-            if alt_dir.exists():
-                source_data[repo_name] = alt_dir
+            # Check for data/final or just final
+            for sub in ["data/final", "final"]:
+                cand = staging_dir / sub
+                if cand.exists():
+                    source_data[repo_name] = cand
+                    break
+            if repo_name not in source_data:
+                source_data[repo_name] = staging_dir
 
     return source_data
 
