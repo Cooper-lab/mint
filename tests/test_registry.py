@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from mint.registry import (
+from mintd.registry import (
     LocalRegistry,
     get_registry_client,
     load_project_metadata,
@@ -34,7 +34,7 @@ class TestLocalRegistry:
         assert registry.registry_org == "test-org"
         assert registry.registry_name == "test-repo.git"
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_clone_registry_success(self, mock_run):
         """Test successful registry cloning."""
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
@@ -51,7 +51,7 @@ class TestLocalRegistry:
         assert registry.repo_path is not None
         assert registry.temp_dir is not None
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_clone_registry_failure(self, mock_run):
         """Test registry cloning failure."""
         mock_run.side_effect = subprocess.CalledProcessError(1, "git", stderr="Permission denied")
@@ -61,7 +61,7 @@ class TestLocalRegistry:
         with pytest.raises(subprocess.CalledProcessError):
             registry._clone_registry()
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_create_branch_success(self, mock_run):
         """Test successful branch creation."""
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
@@ -80,7 +80,7 @@ class TestLocalRegistry:
             check=True
         )
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_create_branch_existing(self, mock_run):
         """Test branch creation when branch already exists."""
         # First call (checkout -b) fails, second (checkout) succeeds
@@ -99,7 +99,7 @@ class TestLocalRegistry:
         args, kwargs = mock_run.call_args
         assert args[0] == ["git", "checkout", "existing-branch"]
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_commit_and_push_success(self, mock_run):
         """Test successful commit and push."""
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
@@ -125,7 +125,7 @@ class TestLocalRegistry:
         assert "origin" in calls[2][0][0]
         assert "test-branch" in calls[2][0][0]
 
-    @patch("mint.registry.subprocess.run")
+    @patch("mintd.registry.subprocess.run")
     def test_create_pull_request_success(self, mock_run):
         """Test successful PR creation."""
         mock_run.return_value = Mock(returncode=0, stdout="https://github.com/test-org/test-repo/pull/123", stderr="")
@@ -149,11 +149,11 @@ class TestLocalRegistry:
 class TestLocalRegistryIntegration:
     """Test LocalRegistry integration functionality."""
 
-    @patch("mint.registry.LocalRegistry._clone_registry")
-    @patch("mint.registry.LocalRegistry._create_branch")
-    @patch("mint.registry.LocalRegistry._write_catalog_entry")
-    @patch("mint.registry.LocalRegistry._commit_and_push")
-    @patch("mint.registry.LocalRegistry._create_pull_request")
+    @patch("mintd.registry.LocalRegistry._clone_registry")
+    @patch("mintd.registry.LocalRegistry._create_branch")
+    @patch("mintd.registry.LocalRegistry._write_catalog_entry")
+    @patch("mintd.registry.LocalRegistry._commit_and_push")
+    @patch("mintd.registry.LocalRegistry._create_pull_request")
     def test_register_project_full_flow(self, mock_pr, mock_push, mock_write, mock_branch, mock_clone):
         """Test full project registration flow."""
         mock_clone.return_value = Path("/tmp/registry")
@@ -197,8 +197,8 @@ class TestLocalRegistryIntegration:
         mock_push.assert_called_once()
         mock_pr.assert_called_once()
 
-    @patch("mint.registry.LocalRegistry._run_git_command")
-    @patch("mint.registry.LocalRegistry._run_gh_command")
+    @patch("mintd.registry.LocalRegistry._run_git_command")
+    @patch("mintd.registry.LocalRegistry._run_gh_command")
     def test_check_registration_status_registered(self, mock_gh, mock_git):
         """Test checking status of registered project."""
         # Mock git clone
@@ -216,8 +216,8 @@ class TestLocalRegistryIntegration:
         assert status["type"] == "data"
         assert "test_project" in status["full_name"]
 
-    @patch("mint.registry.LocalRegistry._run_git_command")
-    @patch("mint.registry.LocalRegistry._run_gh_command")
+    @patch("mintd.registry.LocalRegistry._run_git_command")
+    @patch("mintd.registry.LocalRegistry._run_gh_command")
     def test_check_registration_status_pending_pr(self, mock_gh, mock_git):
         """Test checking status of project with pending PR."""
         # Mock git clone
@@ -240,8 +240,8 @@ class TestLocalRegistryIntegration:
         assert status["registered"] is False
         assert status["pending_pr"] == "https://github.com/test-org/registry/pull/123"
 
-    @patch("mint.registry.LocalRegistry._run_git_command")
-    @patch("mint.registry.LocalRegistry._run_gh_command")
+    @patch("mintd.registry.LocalRegistry._run_git_command")
+    @patch("mintd.registry.LocalRegistry._run_gh_command")
     def test_check_registration_status_not_found(self, mock_gh, mock_git):
         """Test checking status of non-existent project."""
         # Mock git clone
@@ -262,7 +262,7 @@ class TestLocalRegistryIntegration:
 class TestRegistryClientFactory:
     """Test registry client factory functions."""
 
-    @patch("mint.config.get_registry_url")
+    @patch("mintd.config.get_registry_url")
     def test_get_registry_client(self, mock_get_url):
         """Test getting registry client instance."""
         mock_get_url.return_value = "https://github.com/test-org/test-repo"

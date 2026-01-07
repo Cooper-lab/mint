@@ -6,9 +6,9 @@
 # Install uv package manager
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and install mint
+# Clone and install mintd
 git clone <repository-url>
-cd mint
+cd mintd
 uv sync --dev
 ```
 
@@ -20,7 +20,7 @@ pip install git+https://github.com/Cooper-lab/mint.git
 
 # Install from source (development)
 git clone https://github.com/Cooper-lab/mint.git
-cd mint
+cd mintd
 pip install -e ".[dev]"
 
 # Verify installation

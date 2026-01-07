@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from mint.config import (
+from mintd.config import (
     get_config,
     save_config,
     _get_default_config,
@@ -45,8 +45,8 @@ class TestConfig:
             temp_config_dir = Path(temp_dir) / ".mint"
             temp_config_file = temp_config_dir / "config.yaml"
 
-            with patch("mint.config.CONFIG_DIR", temp_config_dir), \
-                 patch("mint.config.CONFIG_FILE", temp_config_file):
+            with patch("mintd.config.CONFIG_DIR", temp_config_dir), \
+                 patch("mintd.config.CONFIG_FILE", temp_config_file):
                 save_config(test_config)
                 loaded_config = get_config()
 
@@ -55,15 +55,15 @@ class TestConfig:
 
     def test_validate_config_incomplete(self):
         """Test config validation with incomplete configuration."""
-        with patch("mint.config.get_config") as mock_get_config:
+        with patch("mintd.config.get_config") as mock_get_config:
             mock_get_config.return_value = {"storage": {}}
 
             assert not validate_config()
 
     def test_validate_config_missing_credentials(self):
         """Test config validation with missing credentials."""
-        with patch("mint.config.get_config") as mock_get_config, \
-             patch("mint.config.get_storage_credentials") as mock_creds:
+        with patch("mintd.config.get_config") as mock_get_config, \
+             patch("mintd.config.get_storage_credentials") as mock_creds:
 
             mock_get_config.return_value = {
                 "storage": {"bucket_prefix": "test"}

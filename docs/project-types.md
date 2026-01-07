@@ -106,3 +106,31 @@ infra_stat_tools/
 │   └── __init__.py
 └── docs/
 ```
+
+## Secure Enclave Projects (`enclave_*`)
+
+For air-gapped environments requiring secure data transfer:
+
+```
+enclave_secure_workspace/
+├── README.md                 # Enclave documentation
+├── metadata.json            # Project metadata
+├── enclave_manifest.yaml    # Data transfer tracking
+├── requirements.txt         # Dependencies
+├── data/                    # Data storage
+│   └── .gitkeep
+├── src/
+│   ├── __init__.py
+│   ├── registry.py         # Registry integration
+│   ├── download.py         # Data pulling logic
+│   ├── package.py          # Transfer packaging
+│   └── verify.py           # Integrity verification
+├── scripts/
+│   ├── pull_data.sh        # Pull latest data
+│   ├── package_transfer.sh # Create transfer archive
+│   ├── unpack_transfer.sh  # Unpack in enclave
+│   └── verify_transfer.sh  # Verify checksums
+├── transfers/              # Transfer archives
+├── .gitignore
+└── .dvcignore
+```

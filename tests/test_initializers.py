@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from mint.initializers.git import init_git, is_git_repo
-from mint.initializers.storage import init_dvc, is_dvc_repo
+from mintd.initializers.git import init_git, is_git_repo
+from mintd.initializers.storage import init_dvc, is_dvc_repo
 
 
 def test_git_repo_detection():
@@ -37,8 +37,8 @@ def test_dvc_repo_detection():
         assert is_dvc_repo(temp_path)
 
 
-@patch('mint.initializers.git._run_git_command')
-@patch('mint.initializers.git._is_command_available')
+@patch('mintd.initializers.git._run_git_command')
+@patch('mintd.initializers.git._is_command_available')
 def test_git_initialization(mock_cmd_available, mock_run_git):
     """Test Git initialization."""
     mock_cmd_available.return_value = True
@@ -59,9 +59,9 @@ def test_git_initialization(mock_cmd_available, mock_run_git):
         assert "commit" in str(call_args[2])  # commit has more complex args
 
 
-@patch('mint.initializers.storage._run_dvc_command')
-@patch('mint.initializers.storage._is_command_available')
-@patch('mint.config.get_config')
+@patch('mintd.initializers.storage._run_dvc_command')
+@patch('mintd.initializers.storage._is_command_available')
+@patch('mintd.config.get_config')
 def test_dvc_initialization(mock_get_config, mock_cmd_available, mock_run_dvc):
     """Test DVC initialization."""
     mock_cmd_available.return_value = True
@@ -82,7 +82,7 @@ def test_dvc_initialization(mock_get_config, mock_cmd_available, mock_run_dvc):
         assert ["remote", "add", "--global", "-d", "storage", "s3://test-bucket/lab/"] in call_args
 
 
-@patch('mint.initializers.git._run_git_command')
+@patch('mintd.initializers.git._run_git_command')
 def test_git_command_error_handling(mock_run_git):
     """Test Git command error handling."""
     mock_run_git.side_effect = FileNotFoundError("git command not found")
@@ -97,7 +97,7 @@ def test_git_command_error_handling(mock_run_git):
         mock_run_git.assert_called()
 
 
-@patch('mint.initializers.storage._run_dvc_command')
+@patch('mintd.initializers.storage._run_dvc_command')
 def test_dvc_command_error_handling(mock_run_dvc):
     """Test DVC command error handling."""
     mock_run_dvc.side_effect = FileNotFoundError("dvc command not found")

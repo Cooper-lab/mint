@@ -1,6 +1,6 @@
-# Mint Utilities
+# Mintd Utilities
 
-mint automatically generates utility files (`_mint_utils.{py|R|do}`) that provide common functionality for all project scripts:
+mintd automatically generates utility files (`_mintd_utils.{py|R|do}`) that provide common functionality for all project scripts:
 
 ## Features
 
@@ -25,7 +25,7 @@ mint automatically generates utility files (`_mint_utils.{py|R|do}`) that provid
 
 **Python:**
 ```python
-from _mint_utils import setup_project_directory, ParameterAwareLogger
+from _mintd_utils import setup_project_directory, ParameterAwareLogger
 
 # Validate project directory and set up logging
 logger = ParameterAwareLogger("ingest")
@@ -38,7 +38,7 @@ logger.close()
 
 **R:**
 ```r
-source("_mint_utils.R")
+source("_mintd_utils.R")
 
 # Set up logging
 logger <- ParameterAwareLogger("clean")
@@ -51,7 +51,7 @@ logger$close()
 
 **Stata:**
 ```stata
-do _mint_utils.do
+do _mintd_utils.do
 
 * Initialize logging
 ParameterAwareLogger clean
@@ -64,13 +64,13 @@ close_logger
 
 ## Updating Utilities
 
-When mint is updated, you can refresh the utility files without touching your scripts:
+When mintd is updated, you can refresh the utility files without touching your scripts:
 
 ```bash
-mint update utils
+mintd update utils
 ```
 
 This command:
-- Regenerates `_mint_utils.*` files with latest features
-- Updates mint version information in `metadata.json`
+- Regenerates `_mintd_utils.*` files with latest features
+- Updates mintd version information in `metadata.json`
 - Preserves all your custom scripts and data

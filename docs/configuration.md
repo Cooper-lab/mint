@@ -5,7 +5,7 @@
 Run the interactive configuration:
 
 ```bash
-mint config setup
+mintd config setup
 ```
 
 This will prompt for:
@@ -18,7 +18,7 @@ This will prompt for:
 
 ## Configuration File
 
-Settings are stored in `~/.mint/config.yaml`:
+Settings are stored in `~/.mintd/config.yaml`:
 
 ```yaml
 storage:
@@ -40,10 +40,10 @@ defaults:
 
 ```bash
 # Set individual values
-mint config setup --set storage.bucket_prefix mylab
-mint config setup --set defaults.author "Jane Doe"
-mint config setup --set registry.url "https://github.com/your-org/registry"
+mintd config setup --set storage.bucket_prefix mylab
+mintd config setup --set defaults.author "Jane Doe"
+mintd config setup --set registry.url "https://github.com/your-org/registry"
 
 # Configure storage credentials
-mint config setup --set-credentials
+mintd config setup --set-credentials
 ```

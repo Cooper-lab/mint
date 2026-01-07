@@ -1,6 +1,6 @@
 # Custom Templates
 
-Mint supports custom templates that allow you to define your own project structures and files. This is useful for:
+Mintd supports custom templates that allow you to define your own project structures and files. This is useful for:
 - Creating lab-specific project layouts
 - Standardizing repetitive project setups
 - Experimenting with new project structures
@@ -9,16 +9,16 @@ Mint supports custom templates that allow you to define your own project structu
 
 ### Discovery
 
-Mint looks for custom templates in the following locations (in order of priority):
-1. The directory specified by the `MINT_TEMPLATES_DIR` environment variable.
-2. `~/.mint/templates/` directory.
+Mintd looks for custom templates in the following locations (in order of priority):
+1. The directory specified by the `MINTD_TEMPLATES_DIR` environment variable.
+2. `~/.mintd/templates/` directory.
 
 ### Listing Available Templates
 
 To see all available templates, including custom ones:
 
 ```bash
-mint templates list
+mintd templates list
 ```
 
 ### Creating a Project from a Custom Template
@@ -26,28 +26,28 @@ mint templates list
 To create a project using a custom template:
 
 ```bash
-mint create custom <template_prefix> --name <project_name>
+mintd create custom <template_prefix> --name <project_name>
 ```
 
 For example, if you have a template with prefix `paper_`, you can run:
 
 ```bash
-mint create custom paper --name my_paper
+mintd create custom paper --name my_paper
 ```
 
 ## Creating a Custom Template
 
-A custom template is a Python class that inherits from `mint.templates.base.BaseTemplate`.
+A custom template is a Python class that inherits from `mintd.templates.base.BaseTemplate`.
 
 ### Step 1: Create the Template File
 
-Create a python file (e.g., `my_templates.py`) in `~/.mint/templates/`.
+Create a python file (e.g., `my_templates.py`) in `~/.mintd/templates/`.
 
 ### Step 2: Define the Template Class
 
 ```python
 from typing import Dict, List, Tuple, Any
-from mint.templates.base import BaseTemplate
+from mintd.templates.base import BaseTemplate
 
 class MyTemplate(BaseTemplate):
     """My Custom Template Description."""
@@ -82,7 +82,7 @@ class MyTemplate(BaseTemplate):
 
 If you use Jinja2 templates (files ending in `.j2`), they should be placed in a `files` subdirectory relative to your template python file, or you can override `__init__` to point to a specific template directory.
 
-By default, `BaseTemplate` looks for templates in the `mint` package. Custom templates might need to set `self.template_dir` if they have their own Jinja2 files.
+By default, `BaseTemplate` looks for templates in the `mintd` package. Custom templates might need to set `self.template_dir` if they have their own Jinja2 files.
 
 ```python
     def __init__(self):

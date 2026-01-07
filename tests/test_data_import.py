@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from click.testing import CliRunner
 
-from mint.data_import import (
+from mintd.data_import import (
     ImportTransaction, ImportResult, DataImportError,
     RegistryError, DVCImportError, MetadataUpdateError,
     query_data_product, validate_project_directory,
@@ -152,7 +152,7 @@ class TestImportTransaction:
 
 class TestRegistryQuery:
 
-    @patch('mint.data_import.get_registry_client')
+    @patch('mintd.data_import.get_registry_client')
     def test_query_data_product_success(self, mock_get_client, mock_data_product):
         """Test successful data product query."""
         mock_client = Mock()
@@ -164,7 +164,7 @@ class TestRegistryQuery:
         assert result == mock_data_product
         mock_client.query_data_product.assert_called_once_with("test_product")
 
-    @patch('mint.data_import.get_registry_client')
+    @patch('mintd.data_import.get_registry_client')
     def test_query_data_product_registry_error(self, mock_get_client):
         """Test registry error handling."""
         mock_client = Mock()
@@ -188,7 +188,7 @@ class TestProjectValidation:
 
     def test_validate_project_directory_no_metadata(self, temp_dir):
         """Test validation fails without metadata.json."""
-        with pytest.raises(DataImportError, match="Not a mint project directory"):
+        with pytest.raises(DataImportError, match="Not a mintd project directory"):
             validate_project_directory(temp_dir)
 
     def test_validate_project_directory_invalid_type(self, temp_dir):
@@ -312,10 +312,10 @@ class TestMetadataUpdate:
 
 class TestImportDataProduct:
 
-    @patch('mint.data_import.query_data_product')
-    @patch('mint.data_import.validate_project_directory')
-    @patch('mint.data_import.run_dvc_import')
-    @patch('mint.data_import.update_project_metadata')
+    @patch('mintd.data_import.query_data_product')
+    @patch('mintd.data_import.validate_project_directory')
+    @patch('mintd.data_import.run_dvc_import')
+    @patch('mintd.data_import.update_project_metadata')
     def test_import_data_product_success(
         self, mock_update_metadata, mock_run_dvc, mock_validate, mock_query,
         mock_project_dir, mock_data_product
@@ -335,7 +335,7 @@ class TestImportDataProduct:
         assert result.dvc_file == "test.dvc"
         assert "data/imports/" in result.local_path
 
-    @patch('mint.data_import.query_data_product')
+    @patch('mintd.data_import.query_data_product')
     def test_import_data_product_registry_error(self, mock_query, mock_project_dir):
         """Test import fails with registry error."""
         mock_query.side_effect = RegistryError("Registry not found")
@@ -356,7 +356,7 @@ class TestImportDataProduct:
 
 class TestPullDataProduct:
 
-    @patch('mint.data_import.query_data_product')
+    @patch('mintd.data_import.query_data_product')
     @patch('tempfile.mkdtemp')
     @patch('git.Repo.clone_from')
     @patch('shutil.copytree')
@@ -387,7 +387,7 @@ class TestPullDataProduct:
 
 class TestListDataProducts:
 
-    @patch('mint.data_import.load_project_metadata')
+    @patch('mintd.data_import.load_project_metadata')
     def test_list_imported_dependencies(self, mock_load_metadata, mock_project_dir):
         """Test listing imported dependencies."""
         # Mock metadata with dependencies
@@ -407,7 +407,7 @@ class TestListDataProducts:
         # This should not raise an exception
         list_data_products(show_imported=True, project_path=mock_project_dir)
 
-    @patch('mint.data_import.get_registry_client')
+    @patch('mintd.data_import.get_registry_client')
     def test_list_available_products(self, mock_get_client):
         """Test listing available products from registry."""
         mock_client = Mock()
@@ -428,7 +428,7 @@ class TestCLI:
 
     def test_data_command_help(self):
         """Test data command help."""
-        from mint.cli import main
+        from mintd.cli import main
         runner = CliRunner()
         result = runner.invoke(main, ["data", "--help"])
         assert result.exit_code == 0
@@ -436,7 +436,7 @@ class TestCLI:
 
     def test_data_pull_help(self):
         """Test data pull command help."""
-        from mint.cli import main
+        from mintd.cli import main
         runner = CliRunner()
         result = runner.invoke(main, ["data", "pull", "--help"])
         assert result.exit_code == 0
@@ -444,7 +444,7 @@ class TestCLI:
 
     def test_data_import_help(self):
         """Test data import command help."""
-        from mint.cli import main
+        from mintd.cli import main
         runner = CliRunner()
         result = runner.invoke(main, ["data", "import", "--help"])
         assert result.exit_code == 0
@@ -452,7 +452,7 @@ class TestCLI:
 
     def test_data_list_help(self):
         """Test data list command help."""
-        from mint.cli import main
+        from mintd.cli import main
         runner = CliRunner()
         result = runner.invoke(main, ["data", "list", "--help"])
         assert result.exit_code == 0
@@ -465,9 +465,9 @@ class TestCLI:
 
 class TestIntegration:
 
-    @patch('mint.data_import.query_data_product')
-    @patch('mint.data_import.run_dvc_import')
-    @patch('mint.data_import.update_project_metadata')
+    @patch('mintd.data_import.query_data_product')
+    @patch('mintd.data_import.run_dvc_import')
+    @patch('mintd.data_import.update_project_metadata')
     def test_import_e2e_workflow(
         self, mock_update, mock_dvc_import, mock_query,
         mock_project_dir, mock_data_product
@@ -520,7 +520,7 @@ class TestErrorHandling:
         assert result.error_message == "Network timeout"
         assert result.dvc_file is None
 
-    @patch('mint.data_import.import_data_product')
+    @patch('mintd.data_import.import_data_product')
     def test_multi_import_partial_failure_simulation(self, mock_import, mock_project_dir):
         """Test handling multiple imports with partial failure."""
         # Mock first import success, second failure

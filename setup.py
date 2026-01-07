@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="mint",
+    name="mintd",
     version="0.1.0",
     author="mint development team",
     author_email="mint@example.com",
@@ -53,7 +53,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "mint=mint.cli:main",
+            "mintd=mintd.cli:main",
         ],
     },
 )

@@ -1,0 +1,105 @@
+Metadata-Version: 2.4
+Name: mintd
+Version: 0.0.1
+Summary: Lab project scaffolding tool
+Home-page: https://github.com/Cooper-lab/mint
+Author: mint development team
+Author-email: mint development team <mint@example.com>
+Maintainer-email: mint development team <mint@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/Cooper-lab/mint
+Project-URL: Documentation, https://mint.readthedocs.io/
+Project-URL: Repository, https://github.com/Cooper-lab/mint
+Project-URL: Issues, https://github.com/Cooper-lab/mint/issues
+Project-URL: Changelog, https://github.com/Cooper-lab/mint/blob/main/CHANGELOG.md
+Keywords: research,data,version-control,git,dvc,stata,python,cli
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Archiving
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click>=8.0
+Requires-Dist: gitpython>=3.1
+Requires-Dist: jinja2>=3.0
+Requires-Dist: rich>=13.0
+Requires-Dist: keyring>=24.0
+Requires-Dist: boto3>=1.28
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: dvc>=3.0
+Requires-Dist: pygithub>=2.0.0
+Requires-Dist: requests>=2.25.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: ruff>=0.1; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: mkdocs>=1.5.0; extra == "docs"
+Requires-Dist: mkdocs-material>=9.5.0; extra == "docs"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Mint - Lab Project Scaffolding Tool
+
+A comprehensive Python CLI tool that automates the creation of standardized research project repositories with pre-configured version control, data versioning, **mandatory language selection (Python/R/Stata)**, and **Data Commons Registry integration**.
+
+> [!NOTE]
+> **Full Documentation**: [https://cooper-lab.github.io/mint/](https://cooper-lab.github.io/mint/)
+
+## Features
+
+- 🚀 **Rapid Project Setup**: Create standardized research projects in seconds
+- 📊 **Multi-Language Support**: Python, R, and Stata
+- 🔄 **Version Control**: Automatic Git and DVC initialization
+- ☁️ **Cloud Storage**: S3-compatible storage support (AWS, Wasabi, MinIO)
+- 🛠️ **Mint Utilities**: Auto-generated utilities for logging and validation
+- 🎉 **Registry Integration**: Tokenless GitOps-based project registration
+
+## Quick Install
+
+### Using uv (Recommended)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone <repository-url>
+cd mint
+uv sync --dev
+```
+
+### Using pip
+
+```bash
+pip install git+https://github.com/Cooper-lab/mint.git
+```
+
+## Quick Start
+
+```bash
+# Create a data processing project (language required)
+mint create data --name healthcare_analysis --lang python
+
+# Create a research analysis project
+mint create project --name cost_study --lang r
+
+# Create an infrastructure package
+mint create infra --name stat_tools --lang python
+
+# Create with Registry Integration
+mint create data --name healthcare_analysis --lang python --register
+
+# Create a secure enclave workspace
+mint create enclave --name secure_workspace
+```
+
+See the [Documentation](https://cooper-lab.github.io/mint/) for detailed guides on configuration, Stata integration, and advanced usage.

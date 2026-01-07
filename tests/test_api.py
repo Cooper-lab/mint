@@ -3,7 +3,7 @@
 import tempfile
 from pathlib import Path
 
-from mint.api import create_project
+from mintd.api import create_project
 
 
 def test_create_project_data():

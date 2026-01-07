@@ -3,7 +3,7 @@
 import tempfile
 from pathlib import Path
 
-from mint.templates import DataTemplate, ProjectTemplate, InfraTemplate
+from mintd.templates import DataTemplate, ProjectTemplate, InfraTemplate
 
 
 def test_data_template():
@@ -78,7 +78,7 @@ def test_template_creation():
         assert result_path.exists()
         assert (result_path / "README.md").exists()
         assert (result_path / "metadata.json").exists()
-        assert (result_path / "code" / "_mint_utils.py").exists()
+        assert (result_path / "code" / "_mintd_utils.py").exists()
         assert (result_path / "data" / "raw" / ".gitkeep").exists()
         assert (result_path / "data" / "intermediate" / ".gitkeep").exists()
         assert (result_path / "data" / "final" / ".gitkeep").exists()

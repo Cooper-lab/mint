@@ -13,35 +13,35 @@ def test_package_installation():
     print("🧪 Testing mint package installation...")
 
     # Test basic import
-    import mint
-    assert mint.__name__ == "mint"
+    import mintd
+    assert mintd.__name__ == "mintd"
     
     # Test CLI import
-    from mint.cli import main
+    from mintd.cli import main
     assert main is not None
 
     # Test API import
-    from mint.api import create_project
+    from mintd.api import create_project
     assert create_project is not None
 
     # Test template imports
-    from mint.templates import DataTemplate, ProjectTemplate, InfraTemplate
+    from mintd.templates import DataTemplate, ProjectTemplate, InfraTemplate
     assert DataTemplate is not None
     assert ProjectTemplate is not None
     assert InfraTemplate is not None
 
     # Test initializer imports
-    from mint.initializers.git import init_git
-    from mint.initializers.storage import init_dvc
+    from mintd.initializers.git import init_git
+    from mintd.initializers.storage import init_dvc
     assert init_git is not None
     assert init_dvc is not None
 
     # Test configuration
-    from mint.config import get_config
+    from mintd.config import get_config
     assert get_config is not None
 
     # Test Stata files accessibility
-    package_dir = os.path.dirname(mint.__file__)
+    package_dir = os.path.dirname(mintd.__file__)
     stata_dir = os.path.join(package_dir, '..', '..', 'stata')
 
     if os.path.exists(stata_dir):
@@ -52,7 +52,7 @@ def test_package_installation():
     
     # Test CLI execution (basic)
     result = subprocess.run([
-        sys.executable, '-c', 'from mint.cli import main; main(["--help"])'
+        sys.executable, '-c', 'from mintd.cli import main; main(["--help"])'
     ], capture_output=True, text=True, timeout=10)
     
     assert result.returncode == 0, f"CLI execution failed: {result.stderr}"

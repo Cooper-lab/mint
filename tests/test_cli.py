@@ -2,7 +2,7 @@
 
 import pytest
 from click.testing import CliRunner
-from mint.cli import main
+from mintd.cli import main
 
 
 def test_cli_main():
@@ -10,7 +10,7 @@ def test_cli_main():
     runner = CliRunner()
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
-    assert "mint - Lab Project Scaffolding Tool" in result.output
+    assert "mintd - Lab Project Scaffolding Tool" in result.output
 
 
 def test_create_data_help():

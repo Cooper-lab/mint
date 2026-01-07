@@ -1,4 +1,4 @@
-# Mint - Lab Project Scaffolding Tool
+# Mintd - Lab Project Scaffolding Tool
 
 A comprehensive Python CLI tool that automates the creation of standardized research project repositories with pre-configured version control, data versioning, **mandatory language selection (Python/R/Stata)**, and **Data Commons Registry integration**. Version 1.0.0 includes full GitOps-based project registration without requiring personal access tokens, plus auto-generated utilities for logging, project validation, and schema generation.
 
@@ -12,9 +12,9 @@ A comprehensive Python CLI tool that automates the creation of standardized rese
 - 📁 **Standardized Structure**: Consistent directory layouts for different project types
 - 🔧 **CLI & API**: Command-line interface and Python API
 - 📈 **Stata Integration**: Native Stata commands for seamless workflow
-- 🛠️ **Mint Utilities**: Auto-generated utilities for logging, project validation, and schema generation
+- 🛠️ **Mintd Utilities**: Auto-generated utilities for logging, project validation, and schema generation
 - 📝 **Parameter-Aware Logging**: Automatic logging with parameter-based filenames (e.g., `ingest_2023.log`)
-- 🔖 **Version Tracking**: Metadata includes mint version and commit hash for reproducibility
+- 🔖 **Version Tracking**: Metadata includes mintd version and commit hash for reproducibility
 - 🌐 **Cross-Platform Support**: Automatic Stata detection and platform-aware command execution
 - 📍 **Script Directory Execution**: Commands run from `src/` directory for consistent path handling
 

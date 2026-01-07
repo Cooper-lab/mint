@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Installation verification script for mint.
+Installation verification script for mintd.
 Run this after installing mint to verify everything is working correctly.
 """
 
@@ -43,7 +43,7 @@ def verify_installation():
         sys.path.insert(0, local_src)
 
     try:
-        import mint
+        import mintd
         version = getattr(mint, '__version__', 'unknown')
         check("mint package import", True, f"Version: {version} (local source)")
     except ImportError:
@@ -51,29 +51,29 @@ def verify_installation():
 
     # Check CLI
     try:
-        from mint.cli import main
+        from mintd.cli import main
         check("CLI module import", True)
     except ImportError:
         check("CLI module import", False)
 
     # Check API
     try:
-        from mint.api import create_project
+        from mintd.api import create_project
         check("API module import", True)
     except ImportError:
         check("API module import", False)
 
     # Check templates
     try:
-        from mint.templates import DataTemplate, ProjectTemplate, InfraTemplate
+        from mintd.templates import DataTemplate, ProjectTemplate, InfraTemplate
         check("Template modules import", True)
     except ImportError:
         check("Template modules import", False)
 
     # Check initializers
     try:
-        from mint.initializers.git import init_git
-        from mint.initializers.storage import init_dvc
+        from mintd.initializers.git import init_git
+        from mintd.initializers.storage import init_dvc
         check("Initializer modules import", True)
     except ImportError:
         check("Initializer modules import", False)
@@ -99,7 +99,7 @@ def verify_installation():
         if result.returncode != 0:
             # If that fails, try running via python module (for development)
             result = subprocess.run([
-                sys.executable, '-c', f'import sys; sys.path.insert(0, "{local_src}"); from mint.cli import main; main(["--version"])'
+                sys.executable, '-c', f'import sys; sys.path.insert(0, "{local_src}"); from mintd.cli import main; main(["--version"])'
             ], capture_output=True, text=True, timeout=5, env=env)
 
         check(

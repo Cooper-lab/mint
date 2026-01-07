@@ -1,9 +1,9 @@
 # Python API
 
-Use mint programmatically in Python:
+Use mintd programmatically in Python:
 
 ```python
-from mint import create_project
+from mintd import create_project
 
 # Create a project (language is now required)
 result = create_project(

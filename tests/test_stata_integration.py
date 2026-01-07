@@ -12,7 +12,7 @@ def test_stata_integration():
     def _prjsetup_create(project_type, name, path, no_git, no_dvc, bucket):
         """Create project using mint Python package (simulating Stata call)."""
         try:
-            from mint import create_project
+            from mintd import create_project
 
             # Convert string booleans to Python booleans (as done in .ado file)
             init_git = no_git != "True"

@@ -1,6 +1,6 @@
 # Registry Integration
 
-mint integrates with a Data Commons Registry for automatic project cataloging and access control enforcement.
+mintd integrates with a Data Commons Registry for automatic project cataloging and access control enforcement.
 
 ## Prerequisites
 
@@ -13,17 +13,17 @@ Registry integration requires:
 
 ```bash
 # Set registry URL (required for registration)
-mint config setup --set registry.url https://github.com/your-org/data-commons-registry
+mintd config setup --set registry.url https://github.com/your-org/data-commons-registry
 
 # Or set via environment variable
-export MINT_REGISTRY_URL=https://github.com/your-org/data-commons-registry
+export MINTD_REGISTRY_URL=https://github.com/your-org/data-commons-registry
 ```
 
 ## Registration Workflow
 
 ```bash
 # Create project with automatic registration
-mint create data --name medicare_data --lang python --register
+mintd create data --name medicare_data --lang python --register
 
 # Behind the scenes:
 # 1. Project scaffolding (Git/DVC setup)
@@ -43,13 +43,13 @@ mint create data --name medicare_data --lang python --register
 
 ```bash
 # Register existing projects
-mint registry register --path /path/to/project
+mintd registry register --path /path/to/project
 
 # Check registration status
-mint registry status medicare_data
+mintd registry status medicare_data
 
 # Process pending registrations (when offline)
-mint registry sync
+mintd registry sync
 ```
 
 ## Registry Features
@@ -62,7 +62,7 @@ mint registry sync
 
 ## GitHub CLI & Git Commands Used
 
-mint uses a **GitOps architecture** where all GitHub operations happen via standard Git and the GitHub CLI (`gh`), eliminating the need for personal access tokens.
+mintd uses a **GitOps architecture** where all GitHub operations happen via standard Git and the GitHub CLI (`gh`), eliminating the need for personal access tokens.
 
 ### GitHub CLI Commands
 
@@ -88,7 +88,7 @@ mint uses a **GitOps architecture** where all GitHub operations happen via stand
 ┌─────────────────────────────────────────────────────────────────┐
 │                     User's Machine                              │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  mint create data --name medicare --lang python --register│  │
+│  │  mintd create data --name medicare --lang python --register│  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                            │                                    │
 │      1. Scaffold project   │                                    │

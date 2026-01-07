@@ -5,7 +5,7 @@
 ```bash
 # Clone repository
 git clone <repository-url>
-cd mint
+cd mintd
 
 # Install with development dependencies
 uv sync --dev

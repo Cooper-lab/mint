@@ -1,0 +1,13 @@
+d mintd - Lab Project Scaffolding Tool
+d
+d mintd provides Stata users with easy access to create standardized
+d research project repositories with Git and DVC version control.
+d
+d Keywords: research, data, version-control, git, dvc, python
+d Requires: Stata 16+
+d Distribution-Date: 20241219
+d
+f mintd.ado
+f mintd.sthlp
+f mintd_installer.ado
+f mintd_installer.sthlp
