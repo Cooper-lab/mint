@@ -3,13 +3,13 @@
 * This do-file provides common utilities used across all project scripts.
 * DO NOT MODIFY - This file is managed by mint and will be overwritten.
 *
-* NOTE: Scripts are expected to run from the src/ directory.
+* NOTE: Scripts are expected to run from the code/ directory.
 * Data paths should use "../data/" to access the data folder.
 
 * =============================================================================
 * GLOBAL PATH DEFINITIONS
 * =============================================================================
-* These paths are relative to src/ where scripts run from
+* These paths are relative to code/ where scripts run from
 
 global DATA_DIR "../data"
 global RAW_DIR "../data/raw"
@@ -23,15 +23,15 @@ global LOGS_DIR "../logs"
 
 capture program drop setup_project_directory
 program define setup_project_directory
-    * Validate we're running from the src/ directory within a mint project
+    * Validate we're running from the code/ directory within a mint project
 
     local current_dir "`c(pwd)'"
     
-    * Check if we're in src/ by looking for project indicators in parent
+    * Check if we're in code/ by looking for project indicators in parent
     local root_indicators "metadata.json .git"
     local is_in_src = 0
 
-    * Check if parent directory has project indicators (we're in src/)
+    * Check if parent directory has project indicators (we're in code/)
     foreach indicator of local root_indicators {
         capture confirm file "../`indicator'"
         if !_rc {
@@ -41,7 +41,7 @@ program define setup_project_directory
     }
 
     if `is_in_src' {
-        display "Running from src/ directory: `current_dir'"
+        display "Running from code/ directory: `current_dir'"
         display "Project root: `current_dir'/.."
         exit
     }
@@ -57,7 +57,7 @@ program define setup_project_directory
     }
 
     if `root_found' {
-        display as text "Note: Running from project root. Consider running from src/"
+        display as text "Note: Running from project root. Consider running from code/"
         display "Project root: `current_dir'"
         
         * Update globals for project-root execution (backwards compatibility)
@@ -71,9 +71,9 @@ program define setup_project_directory
 
     * Not in a valid location
     display as error "Not running from expected directory."
-    display as error "Scripts should be run from src/ directory."
+    display as error "Scripts should be run from code/ directory."
     display as error "Current directory: `current_dir'"
-    display as error "Please cd to the project's src/ directory and try again."
+    display as error "Please cd to the project's code/ directory and try again."
     error 1
 end
 

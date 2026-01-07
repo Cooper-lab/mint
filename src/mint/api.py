@@ -136,6 +136,7 @@ def create_project(
     })
 
     # Select and create template
+    # Select and create template
     if project_type == "data":
         template = DataTemplate()
     elif project_type in ["project", "prj"]:
@@ -146,7 +147,25 @@ def create_project(
     elif project_type == "enclave":
         template = EnclaveTemplate()
     else:
-        raise ValueError(f"Unknown project type: {project_type}")
+        # Check for custom templates
+        from .utils.loader import load_custom_templates
+        custom_templates = load_custom_templates()
+        
+        # Check against prefixes (e.g. project_type "foo" matches prefix "foo_")
+        # Or should we expect project_type to MATCH the prefix?
+        # CLI commands correspond to cleaned names ("foo" from "foo_")
+        # Let's map clean names to templates
+        
+        custom_map = {prefix.rstrip("_"): cls for prefix, cls in custom_templates.items()}
+        
+        if project_type in custom_map:
+            template_cls = custom_map[project_type]
+            template = template_cls()
+        elif project_type in custom_templates: # In case full prefix was passed
+            template_cls = custom_templates[project_type]
+            template = template_cls()
+        else:
+            raise ValueError(f"Unknown project type: {project_type}")
 
     # Create the project
     project_path = template.create(name, path, **context)

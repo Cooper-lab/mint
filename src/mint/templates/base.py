@@ -3,26 +3,25 @@
 import os
 import subprocess
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Dict, List, Tuple, Any
 from datetime import datetime
-
-from jinja2 import Environment, FileSystemLoader, Template
 try:
-    # Python 3.9+
     from importlib.resources import files
 except ImportError:
-    # Python < 3.9
-    from importlib_resources import files
+    from importlib_resources import files  # type: ignore
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
-from ..utils import validate_project_name, format_project_name
+from jinja2 import Environment, FileSystemLoader
+
+from .languages import LanguageStrategy, PythonStrategy, RStrategy, StataStrategy
+from ..utils import validate_project_name
 from .. import __version__
-
 
 class BaseTemplate(ABC):
     """Base class for all project templates."""
 
     prefix: str  # e.g., "data_", "prj__", "infra_"
+    strategy: LanguageStrategy = None
 
     def __init__(self):
         """Initialize the template."""
@@ -46,6 +45,7 @@ class BaseTemplate(ABC):
         )
 
         self.language = "python"  # Default language
+        self.source_dir = "code"  # Default source directory
 
     @staticmethod
     def _get_mint_info() -> Dict[str, str]:
@@ -72,28 +72,60 @@ class BaseTemplate(ABC):
             "mint_hash": commit_hash
         }
 
-    @abstractmethod
-    def get_directory_structure(self, use_current_repo: bool = False) -> Dict[str, Any]:
-        """Return nested dict representing directory structure to create.
+    @property
+    def template_type(self) -> str:
+        """Return the template type (project, data, infra, etc)."""
+        return "base"
 
-        Example:
-        {
-            "data": {
-                "raw": {},
-                "intermediate": {},
-                "final": {}
-            },
-            "src": {
-                "ingest.py": None,  # File to create
-                "clean.py": None,
-            }
-        }
-        """
+    def _merge_structure(self, base: Dict[str, Any], updates: Dict[str, Any]) -> None:
+        """Deep merge updates into base structure."""
+        for key, value in updates.items():
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                self._merge_structure(base[key], value)
+            else:
+                base[key] = value
+
+    def get_directory_structure(self, use_current_repo: bool = False) -> Dict[str, Any]:
+        """Return nested dict representing directory structure to create."""
+        # Get base structure from subclass
+        structure = self.define_structure(use_current_repo)
+        
+        # Merge language-specific updates if strategy is present
+        if self.strategy:
+            updates = {}
+            if self.template_type == "project":
+                updates = self.strategy.get_project_structure(self.source_dir)
+            elif self.template_type == "data":
+                updates = self.strategy.get_data_structure(self.source_dir)
+            # Infra requires dynamic handling in the subclass, so we skip it here.
+            
+            self._merge_structure(structure, updates)
+
+        return structure
+
+    @abstractmethod
+    def define_structure(self, use_current_repo: bool = False) -> Dict[str, Any]:
+        """Define the base directory structure. Subclasses must implement this."""
         pass
 
-    @abstractmethod
     def get_template_files(self) -> List[Tuple[str, str]]:
         """Return list of (relative_path, template_name) tuples for Jinja2 templates."""
+        files = self.define_files()
+        
+        if self.strategy:
+            strategy_files = []
+            if self.template_type == "project":
+                strategy_files = self.strategy.get_project_files(self.source_dir)
+            elif self.template_type == "data":
+                strategy_files = self.strategy.get_data_files(self.source_dir)
+            
+            files.extend(strategy_files)
+            
+        return files
+
+    @abstractmethod
+    def define_files(self) -> List[Tuple[str, str]]:
+        """Define the base template files. Subclasses must implement this."""
         pass
 
     def create(self, name: str, path: str = ".", **context) -> Path:
@@ -109,6 +141,20 @@ class BaseTemplate(ABC):
         """
         # Set language from context
         self.language = context.get("language", "python")
+        self.source_dir = context.get("source_dir", "code")
+        
+        # Initialize strategy
+        if self.language == "python":
+            self.strategy = PythonStrategy()
+        elif self.language == "r":
+            self.strategy = RStrategy()
+        elif self.language == "stata":
+            self.strategy = StataStrategy()
+        else:
+            # Fallback or error? For now fallback to None or raise
+            # Only Project, Data, Infra really use it. Enclave might not.
+            self.strategy = None
+
         use_current_repo = context.get("use_current_repo", False)
 
         # Validate project name

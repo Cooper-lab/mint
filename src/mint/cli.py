@@ -221,6 +221,81 @@ def enclave(name: str, path: str, registry_url: str, no_git: bool):
             console.print(f"❌ Error: {e}", style="red")
             raise click.Abort()
 
+@create.command()
+@click.argument("template_name")
+@click.option("--name", "-n", required=True, help="Project name")
+@click.option("--path", "-p", default=".", help="Output directory")
+@click.option("--lang", "--language", default="python", help="Primary programming language")
+@click.option("--no-git", is_flag=True, help="Skip Git initialization")
+@click.option("--no-dvc", is_flag=True, help="Skip DVC initialization")
+@click.option("--register", is_flag=True, help="Register project with Data Commons Registry")
+@click.option("--use-current-repo", is_flag=True, help="Use current directory as project root")
+def custom(template_name: str, name: str, path: str, lang: str, no_git: bool, no_dvc: bool, register: bool, use_current_repo: bool):
+    """Create a project from a custom template."""
+    from .api import create_project
+
+    with console.status(f"Scaffolding {template_name} project..."):
+        try:
+            result = create_project(
+                project_type=template_name,
+                name=name,
+                path=path,
+                language=lang,
+                init_git=not no_git,
+                init_dvc=not no_dvc,
+                register_project=register,
+                use_current_repo=use_current_repo,
+            )
+            console.print(f"✅ Created: {result.full_name}", style="green")
+            console.print(f"   Location: {result.path}", style="dim")
+
+            if register and result.registration_url:
+                console.print(f"   Registration PR: {result.registration_url}", style="dim")
+        except Exception as e:
+            console.print(f"❌ Error: {e}", style="red")
+            raise click.Abort()
+
+
+@main.group()
+def templates():
+    """Manage project templates."""
+    pass
+
+
+@templates.command(name="list")
+def list_templates():
+    """List available project templates."""
+    from .utils.loader import load_custom_templates, get_custom_template_dir
+    from rich.table import Table
+
+    table = Table(title="Available Templates")
+    table.add_column("Type", style="cyan")
+    table.add_column("Prefix", style="green")
+    table.add_column("Source", style="dim")
+    table.add_column("Description")
+
+    # Built-in templates
+    table.add_row("project", "prj_", "Built-in", "Standard research project")
+    table.add_row("data", "data_", "Built-in", "Data product")
+    table.add_row("infra", "infra_", "Built-in", "Infrastructure library")
+    table.add_row("enclave", "enclave_", "Built-in", "Secure data enclave")
+
+    # Custom templates
+    custom_templates = load_custom_templates()
+    custom_dir = get_custom_template_dir()
+
+    for prefix, cls in custom_templates.items():
+        # Derive type name from prefix (remove trailing underscore)
+        type_name = prefix.rstrip("_")
+        description = cls.__doc__.strip() if cls.__doc__ else "Custom template"
+        # First line of docstring
+        description = description.split("\n")[0]
+        
+        table.add_row(type_name, prefix, "Custom", description)
+
+    console.print(table)
+    console.print(f"\nCustom templates directory: [dim]{custom_dir}[/dim]")
+
 
 @main.group()
 def update():
@@ -1182,6 +1257,71 @@ def status(directory: Path, pattern: str, manifest: Path):
     except Exception as e:
         console.print(f"❌ Error getting status: {e}", style="red")
         raise click.Abort()
+
+
+
+def register_custom_commands():
+    """Register CLI commands for custom templates."""
+    try:
+        from .utils.loader import load_custom_templates
+        custom_templates = load_custom_templates()
+        
+        for prefix, _ in custom_templates.items():
+            cmd_name = prefix.rstrip("_")
+            
+            # Skip if command already exists
+            if cmd_name in create.commands:
+                continue
+                
+            # Create a closure to capture cmd_name
+            def create_command_func(cmd_name_val):
+                @create.command(name=cmd_name_val, help=f"Create a {cmd_name_val} project ({prefix}*).")
+                @click.option("--name", "-n", required=True, help="Project name")
+                @click.option("--path", "-p", default=".", help="Output directory")
+                @click.option("--lang", "--language", type=click.Choice(["python", "r", "stata"], case_sensitive=False), required=True, help="Primary programming language")
+                @click.option("--no-git", is_flag=True, help="Skip Git initialization")
+                @click.option("--no-dvc", is_flag=True, help="Skip DVC initialization")
+                @click.option("--bucket", help="Override bucket name for DVC remote")
+                @click.option("--register", is_flag=True, help="Register project with Registry")
+                @click.option("--use-current-repo", is_flag=True, help="Use current directory as project root")
+                @click.option("--admin-team", help="Override default admin team")
+                @click.option("--researcher-team", help="Override default researcher team")
+                def custom_cmd(name, path, lang, no_git, no_dvc, bucket, register, use_current_repo, admin_team, researcher_team):
+                    from .api import create_project
+                    with console.status("Scaffolding project..."):
+                        try:
+                            result = create_project(
+                                project_type=cmd_name_val,
+                                name=name,
+                                path=path,
+                                language=lang,
+                                init_git=not no_git,
+                                init_dvc=not no_dvc,
+                                bucket_name=bucket,
+                                register_project=register,
+                                use_current_repo=use_current_repo,
+                                admin_team=admin_team,
+                                researcher_team=researcher_team,
+                            )
+                            console.print(f"✅ Created: {result.full_name}", style="green")
+                            console.print(f"   Location: {result.path}", style="dim")
+
+                            if register and result.registration_url:
+                                console.print(f"   Registration PR: {result.registration_url}", style="dim")
+                        except Exception as e:
+                            console.print(f"❌ Error: {e}", style="red")
+                            raise click.Abort()
+                return custom_cmd
+            
+            # Register the command
+            create_command_func(cmd_name)
+                        
+    except Exception as e:
+        # Don't crash CLI if custom template loading fails
+        pass
+
+# Register custom commands
+register_custom_commands()
 
 
 if __name__ == "__main__":
