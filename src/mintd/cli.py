@@ -186,17 +186,38 @@ def infra(name: str, path: str, lang: str, no_git: bool, no_dvc: bool, bucket: s
 @click.option("--no-git", is_flag=True, help="Skip Git initialization")
 def enclave(name: str, path: str, registry_url: str, no_git: bool):
     """Create a secure data enclave workspace (enclave_{name})."""
-    from .config import get_registry_url
+    from .config import CONFIG_FILE, get_config, save_config
     import re
     
-    # Get registry URL from config if not provided
+    # Get registry URL - check if explicitly configured
     if not registry_url:
-        try:
-            registry_url = get_registry_url()
-        except ValueError as e:
-            console.print(f"❌ {e}", style="red")
-            console.print("   Use --registry-url to specify a registry URL, or run 'mintd config setup' to configure defaults.")
-            raise click.Abort()
+        # Check if config file exists and has registry URL set
+        config = get_config()
+        config_registry_url = config.get("registry", {}).get("url", "")
+        
+        # Check if this is actually from user config (file exists) or just defaults
+        config_exists = CONFIG_FILE.exists()
+        
+        if config_exists and config_registry_url:
+            # Use configured registry URL
+            registry_url = config_registry_url
+        else:
+            # No config set - prompt the user
+            console.print()
+            console.print("[bold yellow]Registry URL not configured.[/bold yellow]")
+            console.print("The enclave needs a Data Commons Registry URL to pull data from.")
+            console.print()
+            
+            registry_url = click.prompt(
+                "Enter the registry URL (e.g., https://github.com/org/data-registry)",
+                type=str
+            )
+            
+            # Ask if they want to save this for future use
+            if click.confirm("Save this registry URL to your mintd config for future use?", default=True):
+                config["registry"]["url"] = registry_url
+                save_config(config)
+                console.print(f"✅ Registry URL saved to {CONFIG_FILE}", style="green")
     
     # Validate registry URL format
     if not re.match(r'^https://github\.com/[^/]+/[^/]+/?$', registry_url):
