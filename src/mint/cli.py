@@ -864,7 +864,7 @@ def pull(product_name, destination, stage, path):
         raise click.Abort()
 
 
-@data.command()
+@data.command(name="import")
 @click.argument("product_name")
 @click.option("--stage", help="Pipeline stage to import (e.g., final, clean)")
 @click.option("--source-path", help="Specific path to import from the product")
