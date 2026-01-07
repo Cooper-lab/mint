@@ -1,10 +1,21 @@
 # Quick Start
 
+## Configuration Setup
+
+Before creating projects, initialize your configuration:
+
+```bash
+# Interactive setup
+mintd config setup
+```
+
+This ensures your storage buckets and registry settings are correctly configured. See the [Configuration Guide](configuration.md) for more details.
+
 ## Basic Usage
 
 ```bash
 # Create a data processing project (language required)
-mintd create data --name healthcare_analysis --lang python
+mintd create data --name hospital_project --lang python
 
 # Create a research analysis project
 mintd create project --name cost_study --lang r
@@ -17,11 +28,11 @@ mintd create infra --name stat_tools --lang python
 
 ```bash
 # Create projects with automatic registration to Data Commons Registry
-mintd create data --name healthcare_analysis --lang python --register
+mintd create data --name hospital_project --lang python --register
 mintd create project --name cost_study --lang stata --register
 
 # Check registration status
-mintd registry status healthcare_analysis
+mintd registry status hospital_project
 
 # Register existing projects
 mintd registry register --path /path/to/existing/project
@@ -34,14 +45,14 @@ mintd registry register --path /path/to/existing/project
 mintd create data --name mydata --path /projects --bucket my-custom-bucket
 
 # Create projects with specific programming languages (now required)
-mintd create data --name healthcare --lang r
+mintd create data --name hospital_project --lang r
 mintd create project --name analysis --lang stata
 
 # Skip version control initialization
 mintd create project --name analysis --no-git --no-dvc
 
 # Register with Data Commons Registry
-mintd create data --name healthcare --register
+mintd create data --name hospital_project --register
 
 # Use current directory (when in existing git repo)
 cd existing-git-repo
@@ -63,7 +74,7 @@ mintd supports scaffolding projects directly in existing git repositories using 
 cd my-existing-project
 
 # Scaffold mintd project structure in current directory
-mintd create data --name healthcare-data --use-current-repo
+mintd create data --name hospital_project --use-current-repo
 
 # Result: Project files created directly in my-existing-project/
 # ├── README.md (mintd-generated)
@@ -74,7 +85,7 @@ mintd create data --name healthcare-data --use-current-repo
 ```
 
 ### What Happens
-- **No subdirectory created**: Unlike normal usage, no `data_healthcare-data/` folder is created
+- **No subdirectory created**: Unlike normal usage, no `data_hospital_project/` folder is created
 - **Git integration**: Uses existing git repository, adds and commits new files
 - **File conflicts**: Warning displayed if existing files would be overwritten
 - **Same functionality**: All other mintd features work normally (DVC, templates, etc.)

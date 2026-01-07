@@ -85,7 +85,7 @@ help mintd
 3. **Usage in Stata**:
    ```stata
    // Create projects directly from Stata
-   mintd, type(data) name(medicare_data)
+   mintd, type(data) name(hospital_project)
    mintd, type(project) name(analysis) path(/projects)
    mintd, type(infra) name(tools) nogit
 

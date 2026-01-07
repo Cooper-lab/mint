@@ -523,7 +523,7 @@ def clear_pending_registration(project_name: str) -> None:
     """Remove a pending registration after successful registration.
 
     Args:
-        project_name: Full project name (e.g., "data_medicare_claims")
+        project_name: Full project name (e.g., "data_hospital_project")
     """
     pending_dir = Path.home() / ".mintd" / "pending_registrations"
     pending_file = pending_dir / f"{project_name}.json"

@@ -6,7 +6,7 @@ For data products and processing pipelines. Supports Python, R, and Stata:
 
 **Python-focused:**
 ```
-data_healthcare/
+data_hospital_project/
 ├── README.md                 # Project documentation
 ├── metadata.json            # Project metadata (with mint version)
 ├── requirements.txt         # Python dependencies
@@ -27,7 +27,7 @@ data_healthcare/
 
 **R-focused:**
 ```
-data_healthcare/
+data_hospital_project/
 ├── README.md                 # Project documentation
 ├── metadata.json            # Project metadata (with mint version)
 ├── DESCRIPTION              # R package description
@@ -49,7 +49,7 @@ data_healthcare/
 
 **Stata-focused:**
 ```
-data_healthcare/
+data_hospital_project/
 ├── README.md                 # Project documentation
 ├── metadata.json            # Project metadata (with mint version)
 ├── logs/                    # Script execution logs

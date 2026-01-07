@@ -236,7 +236,7 @@ Once installed, you can create projects directly from Stata:
 
 ```stata
 // Create a data repository
-mint, type(data) name(medicare_claims)
+mint, type(data) name(hospital_project)
 
 // Create a research project
 mint, type(project) name(hospital_closures)

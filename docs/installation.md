@@ -40,3 +40,7 @@ python verify_installation.py
 - **SSH Key**: Configured for GitHub (`ssh-keygen -t ed25519 -C "your_email@example.com"`)
 - **GitHub CLI**: Installed and authenticated (`gh auth login`)
 - **Registry Access**: Push permissions to the Data Commons Registry repository
+
+## Next Steps
+
+After installation, proceed to the [Configuration Guide](configuration.md) to set up your environment.

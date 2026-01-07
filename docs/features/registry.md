@@ -23,19 +23,19 @@ export MINTD_REGISTRY_URL=https://github.com/your-org/data-commons-registry
 
 ```bash
 # Create project with automatic registration
-mintd create data --name medicare_data --lang python --register
+mintd create data --name hospital_project --lang python --register
 
 # Behind the scenes:
 # 1. Project scaffolding (Git/DVC setup)
 # 2. Clone registry repository via SSH
 # 3. Generate catalog entry YAML
-# 4. Create feature branch: register-medicare_data
+# 4. Create feature branch: register-hospital_project
 # 5. Commit catalog entry + push branch
 # 6. Open PR via GitHub CLI
 # 7. Return PR URL to user
 
 # Output:
-# ✅ Created: data_medicare_data
+# ✅ Created: data_hospital_project
 # 📋 Registration PR: https://github.com/org/registry/pull/123
 ```
 
@@ -46,7 +46,7 @@ mintd create data --name medicare_data --lang python --register
 mintd registry register --path /path/to/project
 
 # Check registration status
-mintd registry status medicare_data
+mintd registry status hospital_project
 
 # Process pending registrations (when offline)
 mintd registry sync
@@ -88,7 +88,7 @@ mintd uses a **GitOps architecture** where all GitHub operations happen via stan
 ┌─────────────────────────────────────────────────────────────────┐
 │                     User's Machine                              │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  mintd create data --name medicare --lang python --register│  │
+│  │  mintd create data --name hospital_project --lang python --register│  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                            │                                    │
 │      1. Scaffold project   │                                    │

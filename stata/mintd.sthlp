@@ -66,7 +66,7 @@ Projects are created with:
 {title:Examples}
 
 {pstd}Create a data repository:{p_end}
-{phang2}{cmd:. mintd, type(data) name(medicare_claims)}{p_end}
+{phang2}{cmd:. mintd, type(data) name(hospital_project)}{p_end}
 
 {pstd}Create a research project in a specific location:{p_end}
 {phang2}{cmd:. mintd, type(project) name(hospital_closures) path(/path/to/repos)}{p_end}

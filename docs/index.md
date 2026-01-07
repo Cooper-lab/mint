@@ -1,26 +1,31 @@
-# Mintd - Lab Project Scaffolding Tool
+# Mintd: Effortless Research Project Management
 
-A comprehensive Python CLI tool that automates the creation of standardized research project repositories with pre-configured version control, data versioning, **mandatory language selection (Python/R/Stata)**, and **Data Commons Registry integration**. Version 1.0.0 includes full GitOps-based project registration without requiring personal access tokens, plus auto-generated utilities for logging, project validation, and schema generation.
+`mintd` is a command-line tool designed for social science researchers who need to organize their work, ensure reproducibility, and collaborate seamlessly. It automates the tedious parts of project setup so you can focus on your analysis.
 
-## Features
+## Why use `mintd`?
 
-### Core Functionality
-- 🚀 **Rapid Project Setup**: Create standardized research projects in seconds
-- 📊 **Multi-Language Support**: Python, R, and Stata with mandatory language selection
-- 🔄 **Version Control**: Automatic Git and DVC initialization with cloud storage
-- ☁️ **Cloud Storage**: S3-compatible storage support (AWS, Wasabi, MinIO)
-- 📁 **Standardized Structure**: Consistent directory layouts for different project types
-- 🔧 **CLI & API**: Command-line interface and Python API
-- 📈 **Stata Integration**: Native Stata commands for seamless workflow
-- 🛠️ **Mintd Utilities**: Auto-generated utilities for logging, project validation, and schema generation
-- 📝 **Parameter-Aware Logging**: Automatic logging with parameter-based filenames (e.g., `ingest_2023.log`)
-- 🔖 **Version Tracking**: Metadata includes mintd version and commit hash for reproducibility
-- 🌐 **Cross-Platform Support**: Automatic Stata detection and platform-aware command execution
-- 📍 **Script Directory Execution**: Commands run from `src/` directory for consistent path handling
+### 📁 Standardized Research Workflows
+Stop worrying about how to organize your folders. `mintd` creates a consistent, lab-standard structure for every project, making it easy for you and your collaborators to find data, scripts, and results.
 
-### 🎉 Data Commons Registry Integration (v1.0.0)
-- 🏛️ **Automatic Project Registration**: Tokenless GitOps-based cataloging
-- 🔐 **Secure Access Control**: Automatic permission synchronization via GitHub Actions
-- 📋 **Registry Management**: CLI commands for registration status and management
-- 🔄 **Offline Mode**: Graceful handling with automatic retry when registry is unreachable
-- 🚫 **Zero Token Management**: Uses SSH keys and GitHub CLI instead of personal access tokens
+### 🛡️ Built-in Reproducibility
+`mintd` automatically initializes version control for both your code (Git) and your data (DVC). Every time you run an analysis, `mintd` helps you track exactly which version of the data was used, ensuring your results can be audited and replicated.
+
+### 🛠️ Multi-Tool Compatibility
+Whether you prefer **Stata**, **R**, or **Python**, `mintd` has you covered. It generates language-specific templates and utilities, including native Stata commands and automated logging, so your workflow stays consistent across tools.
+
+### 🌐 Seamless Data Commons Integration
+Automatically register your projects with the **Data Commons Registry**. `mintd` handles the technical details of cataloging and permissions in the background, making it easier to share your work with the lab without managing complex security tokens.
+
+---
+
+## Get Started in Seconds
+
+```bash
+# Install mintd
+pip install mintd
+
+# Create a new project
+mintd create my-research-project
+```
+
+Next: [Installation Guide](installation.md) | [Quick Start](quick-start.md)
