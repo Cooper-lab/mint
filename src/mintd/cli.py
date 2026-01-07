@@ -182,12 +182,23 @@ def infra(name: str, path: str, lang: str, no_git: bool, no_dvc: bool, bucket: s
 @create.command()
 @click.option("--name", "-n", required=True, help="Project name")
 @click.option("--path", "-p", default=".", help="Output directory")
-@click.option("--registry-url", required=True, help="Data Commons Registry GitHub URL (e.g., https://github.com/org/data-registry)")
+@click.option("--registry-url", required=False, help="Data Commons Registry GitHub URL (e.g., https://github.com/org/data-registry). Uses config default if not provided.")
 @click.option("--no-git", is_flag=True, help="Skip Git initialization")
 def enclave(name: str, path: str, registry_url: str, no_git: bool):
     """Create a secure data enclave workspace (enclave_{name})."""
-    # Validate registry URL format
+    from .config import get_registry_url
     import re
+    
+    # Get registry URL from config if not provided
+    if not registry_url:
+        try:
+            registry_url = get_registry_url()
+        except ValueError as e:
+            console.print(f"❌ {e}", style="red")
+            console.print("   Use --registry-url to specify a registry URL, or run 'mintd config setup' to configure defaults.")
+            raise click.Abort()
+    
+    # Validate registry URL format
     if not re.match(r'^https://github\.com/[^/]+/[^/]+/?$', registry_url):
         console.print("❌ Invalid registry URL format. Expected: https://github.com/org/repo", style="red")
         raise click.Abort()
