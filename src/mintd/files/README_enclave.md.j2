@@ -59,9 +59,9 @@ Copy the transfer archive to the enclave via USB, secure file transfer, etc.
 ### 5. Unpack and Verify (Enclave)
 
 ```bash
-# On enclave machine
-./scripts/unpack_transfer.sh transfer-YYYY-MM-DD.tar.gz
-./scripts/verify_transfer.sh
+# On enclave machine (works on Windows/Linux/Mac)
+python enclave_cli.py unpack transfer-YYYY-MM-DD.tar.gz
+python enclave_cli.py verify transfer_dir/
 ```
 
 ## Data Organization

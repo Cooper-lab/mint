@@ -247,8 +247,8 @@ def enclave(name: str, path: str, registry_url: str, no_git: bool):
             console.print("Next steps:")
             console.print("  1. cd " + str(result.path))
             console.print("  2. Run 'mintd enclave add <repo-name>' to add approved data products")
-            console.print("  3. Run './scripts/pull_data.sh --all' to download data")
-            console.print("  4. Run './scripts/package_transfer.sh' to create transfer packages")
+            console.print("  3. Run 'python enclave_cli.py pull --all' to download data")
+            console.print("  4. Run 'python enclave_cli.py package' to create transfer packages")
         except Exception as e:
             console.print(f"❌ Error: {e}", style="red")
             raise click.Abort()

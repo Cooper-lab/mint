@@ -29,6 +29,9 @@ python verify_installation.py
 
 **Version 1.0.0** includes complete Data Commons Registry integration with tokenless GitOps-based project registration, plus mandatory language selection, parameter-aware logging, and auto-generated utility scripts.
 
+> [!TIP]
+> **Windows Users**: Check out our [Windows Setup Guide](windows-setup.md) for native PowerShell and WSL instructions.
+
 ## Requirements
 
 ### Core Requirements
