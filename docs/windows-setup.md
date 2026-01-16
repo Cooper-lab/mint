@@ -94,8 +94,46 @@ python enclave_cli.py package
 #### Path Separators
 Mintd handles paths automatically, but when manually referencing files, remember to use backslashes (`\`) or quote your paths if they contain spaces.
 
-#### Execution Policy
-If you encounter permission errors running scripts, you may need to adjust your execution policy:
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
+
+### 4. Troubleshooting
+
+#### "The term 'mintd' is not recognized"
+This usually means the Python scripts folder is not in your system PATH. You have two options:
+
+**Option A: Run as a Python Module (Easiest)**
+You can always run mintd commands by adding `python -m` before them. This bypasses PATH issues entirely.
+
+```powershell
+python -m mintd init data test
+python -m mintd create project --name my_study --lang python
+```
+
+**Option B: Fix your PATH (GUI)**
+1.  Search Windows for "Edit the system environment variables".
+2.  Click **Environment Variables**.
+3.  Under "User variables", edit **Path**.
+4.  Add the path shown in the warning message during install (e.g., `C:\Users\YourName\AppData\Roaming\Python\Python312\Scripts`).
+5.  Restart PowerShell.
+
+**Option C: Fix your PATH (PowerShell Command)**
+You can run this command to verify the path and permanently add it. Replace the path below with the one from your warning message:
+
+```powershell
+$ScriptPath = "C:\Users\YourName\AppData\Roaming\Python\Python312\Scripts"
+
+# 1. Add to current session
+$env:PATH += ";$ScriptPath"
+
+# 2. Add permanently
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", "User") + ";$ScriptPath",
+    "User"
+)
+
+Write-Host "Path updated! Restart your terminal for changes to take full effect."
+```
+
