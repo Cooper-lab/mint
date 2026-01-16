@@ -107,11 +107,18 @@ This usually means the Python scripts folder is not in your system PATH. You hav
 You can always run mintd commands by adding `python -m` before them. This bypasses PATH issues entirely.
 
 ```powershell
-python -m mintd init data test
-python -m mintd create project --name my_study --lang python
+# Correct usage:
+python -m mintd create data --name my_study --lang python
 ```
 
-**Option B: Fix your PATH (GUI)**
+**Option B: Use the executable explicitly**
+If the command `mintd` isn't found, try adding the `.exe` extension:
+
+```powershell
+mintd.exe create data --name my_study --lang python
+```
+
+**Option C: Fix your PATH (GUI)**
 1.  Search Windows for "Edit the system environment variables".
 2.  Click **Environment Variables**.
 3.  Under "User variables", edit **Path**.
@@ -122,18 +129,25 @@ python -m mintd create project --name my_study --lang python
 You can run this command to verify the path and permanently add it. Replace the path below with the one from your warning message:
 
 ```powershell
-$ScriptPath = "C:\Users\YourName\AppData\Roaming\Python\Python312\Scripts"
+# Automatically find the Python User Scripts path
+$ScriptPath = python -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))"
 
-# 1. Add to current session
-$env:PATH += ";$ScriptPath"
+if (-not $ScriptPath) {
+    Write-Error "Could not determine Python script path. Ensure Python is installed."
+} else {
+    Write-Host "Found Python Scripts at: $ScriptPath"
 
-# 2. Add permanently
-[Environment]::SetEnvironmentVariable(
-    "Path",
-    [Environment]::GetEnvironmentVariable("Path", "User") + ";$ScriptPath",
-    "User"
-)
+    # 1. Add to current session
+    $env:PATH += ";$ScriptPath"
 
-Write-Host "Path updated! Restart your terminal for changes to take full effect."
+    # 2. Add permanently
+    $CurrentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if ($CurrentPath -notlike "*$ScriptPath*") {
+        [Environment]::SetEnvironmentVariable("Path", $CurrentPath + ";$ScriptPath", "User")
+        Write-Host "Path updated! Restart your terminal for changes to take full effect."
+    } else {
+        Write-Host "Path is already correctly configured."
+    }
+}
 ```
 
